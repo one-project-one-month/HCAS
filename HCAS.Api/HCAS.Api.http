@@ -1,0 +1,6 @@
+@HCAS.Api_HostAddress = http://localhost:5038
+
+GET {{HCAS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
