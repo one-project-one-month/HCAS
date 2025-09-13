@@ -162,7 +162,7 @@ namespace HCAS.Domain.Features.Doctors
             {
                 Result<DoctorsReqModel> model = new Result<DoctorsReqModel>();
 
-                var query = @"DELETE FROM [dbo].[Doctors]
+                var query = @"UPDATE [dbo].[Doctors] SET del_flg = 1
                       WHERE Id = @Id";
 
                 var parameters = new { Id = id };
@@ -175,7 +175,6 @@ namespace HCAS.Domain.Features.Doctors
                     goto Result;
                 }
 
-              
                 model = Result<DoctorsReqModel>.Success(new DoctorsReqModel { Id = id }, "Successfully deleted the doctor");
 
             Result:

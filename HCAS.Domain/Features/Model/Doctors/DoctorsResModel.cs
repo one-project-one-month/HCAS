@@ -11,5 +11,6 @@ namespace HCAS.Domain.Features.Model.Doctors
         public int Id { get; set; }
         public string Name { get; set; } = null!;
         public int? SpecializationId { get; set; }
+        public bool del_flg { get; set; }
     }
 }
