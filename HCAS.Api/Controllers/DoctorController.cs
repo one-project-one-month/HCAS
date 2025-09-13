@@ -20,9 +20,9 @@ namespace HCAS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDoctorList()
         {
-            var result = await _doctorService.GetAllDoctorsList();
+            var doctorList = await _doctorService.GetAllDoctorsList();
 
-            return Ok(result.Data);
+            return Ok(doctorList.Data);
         }
 
 
@@ -43,8 +43,8 @@ namespace HCAS.Api.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
-            var updateDoctor = await _doctorService.DeleteDoctor(id);
-            return Ok(updateDoctor.Data);
+            var deleteDoctor = await _doctorService.DeleteDoctor(id);
+            return Ok(deleteDoctor.Data);
         }
 
     }
