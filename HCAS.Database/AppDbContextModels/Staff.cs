@@ -18,4 +18,6 @@ public partial class Staff
     public string Username { get; set; } = null!;
 
     public string Password { get; set; } = null!;
+    public bool del_flg { get; set; }
+
 }

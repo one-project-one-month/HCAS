@@ -1,69 +1,84 @@
 ﻿
-
-public  class Result<T>
+public class Result<T>
 {
-  public bool IsSuccess { get; set; }
+    public bool IsSuccess { get; set; }
+    public bool IsError { get { return !IsSuccess; } }
+    public bool IsValidationError { get { return Type == EnumRespType.ValidationError; } }
+    public bool IsSystemError { get { return Type == EnumRespType.SystemError; } }
 
-    public bool IsError { get; set; }
-    public bool IsValidationError { get; set; }
-
-    public bool IsSystemError { get; set; }
-
+    private EnumRespType Type { get; set; }
     public T Data { get; set; }
     public string Message { get; set; }
 
-    public enumRespType RespType { get; set; }
+    #region Success
 
-
-    public static Result<T> Success(T data, string message = "")
+    public static Result<T> Success(T data, string message = "Success")
     {
-        return new Result<T>
+        return new Result<T>()
         {
             IsSuccess = true,
+            Type = EnumRespType.Success,
             Data = data,
-            Message = message,
-      };
-    }
-
-    public static Result<T> Error(T data, string message = "")
-    {
-        return new Result<T>
-        {
-            IsError = true,
-            Data = data,
-            Message = message,
+            Message = message
         };
     }
 
-    public static Result<T> SystemError(T data, string message = "")
+    #endregion
+
+    #region DeleteSuccess
+
+    public static Result<T> DeleteSuccess(string message = "Deleting Successful.")
     {
-        return new Result<T>
+        return new Result<T>()
         {
-            IsSystemError = true,
-            Data = data,
-            Message = message,
+            IsSuccess = true,
+            Type = EnumRespType.Success,
+            Message = message
         };
     }
 
-    public static Result<T> ValidationError(T data, string message = "")
+    #endregion
+
+    #region ValidationError
+
+    public static Result<T> ValidationError(string message, T? data = default)
     {
-        return new Result<T>
+        return new Result<T>()
         {
-            IsValidationError = true,
+            IsSuccess = true,
+            Type = EnumRespType.ValidationError,
             Data = data,
-            Message = message,
+            Message = message
         };
     }
 
+    #endregion
 
-    public enum enumRespType
+    #region SystemError
+
+    public static Result<T> SystemError(string message, T? data = default)
+    {
+        return new Result<T>()
+        {
+            IsSuccess = true,
+            Type = EnumRespType.SystemError,
+            Data = data,
+            Message = message
+        };
+    }
+
+    #endregion
+
+    #region EnumRespType
+
+    public enum EnumRespType
     {
         None, 
-        Success, 
-        Error,
+        Success,
         ValidationError,
         SystemError
     }
 
+    #endregion
 
 }

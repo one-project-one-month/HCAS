@@ -1,4 +1,6 @@
 ﻿using HCAS.Database.AppDbContextModels;
+using HCAS.Domain.Features.Doctors;
+using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +16,13 @@ namespace HCAS.Domain
             {
                 opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
             }, ServiceLifetime.Transient, ServiceLifetime.Transient);
+
+            //dependency injections
+            builder.Services.AddScoped<DapperService>();
+            builder.Services.AddScoped<DoctorService>();
+
+
         }
     }
+
 }

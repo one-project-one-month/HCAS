@@ -16,4 +16,7 @@ public partial class Doctor
     public virtual ICollection<DoctorSchedule> DoctorSchedules { get; set; } = new List<DoctorSchedule>();
 
     public virtual Specialization? Specialization { get; set; }
+
+    public bool del_flg { get; set; }
+
 }

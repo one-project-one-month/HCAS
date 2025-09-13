@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HCAS.Domain\HCAS.Domain.csproj" />
+    <ProjectReference Include="..\HCAS.Shared\HCAS.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -16,6 +16,8 @@ public partial class Patient
     public string? Phone { get; set; }
 
     public string? Email { get; set; }
+    public bool del_flg { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+
 }

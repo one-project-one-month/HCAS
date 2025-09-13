@@ -16,4 +16,7 @@ public partial class DoctorSchedule
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual Doctor? Doctor { get; set; }
+
+    public bool del_flg { get; set; }
+
 }

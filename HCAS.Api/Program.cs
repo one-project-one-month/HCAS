@@ -1,4 +1,5 @@
 using HCAS.Domain;
+using HCAS.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.AddDomain();
+
 
 var app = builder.Build();
 

@@ -9,5 +9,7 @@ public partial class Specialization
 
     public string Name { get; set; } = null!;
 
+    public bool del_flg { get; set; }
+
     public virtual ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
 }

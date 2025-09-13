@@ -18,24 +18,24 @@ namespace HCAS.Shared
             _setting = setting.CurrentValue;
         }
 
-        protected IActionResult Excute<T>(Result<T> obj)
-        {
-            var responseType = obj.GetEnumRespType();
-            dynamic result = _setting.EnableEncryption
-                ? EncryptResponse(obj)
-                : obj;
+        //protected IActionResult Excute<T>(Result<T> obj)
+        //{
+        //    var responseType = obj.GetEnumRespType();
+        //    dynamic result = _setting.EnableEncryption
+        //        ? EncryptResponse(obj)
+        //        : obj;
 
-            return responseType switch
-            {
-                EnumRespType.Success => Ok(result),
-                EnumRespType.Error => BadRequest(result),
-                EnumRespType.SystemError => BadRequest(result),
-                EnumRespType.DuplicateRecord => BadRequest(result),
-                EnumRespType.BadRequest => BadRequest(result),
-                EnumRespType.None => throw new Exception("EnumRespType is none. pls check your logic."),
-                _ => throw new Exception("Out of scope in Execute (BaseController). pls check your logic.")
-            };
-        }
+        //    return responseType switch
+        //    {
+        //        EnumRespType.Success => Ok(result),
+        //        EnumRespType.Error => BadRequest(result),
+        //        EnumRespType.SystemError => BadRequest(result),
+        //        EnumRespType.DuplicateRecord => BadRequest(result),
+        //        EnumRespType.BadRequest => BadRequest(result),
+        //        EnumRespType.None => throw new Exception("EnumRespType is none. pls check your logic."),
+        //        _ => throw new Exception("Out of scope in Execute (BaseController). pls check your logic.")
+        //    };
+        //}
 
         private EncryptedResponseDto EncryptResponse<T>(Result<T> obj)
         {
