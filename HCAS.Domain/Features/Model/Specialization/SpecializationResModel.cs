@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Model.Specialization
 {
-    internal class SpecializationResModel
+    public class SpecializationResModel
     {
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;       
+        public bool del_flg { get; set; }
     }
 }

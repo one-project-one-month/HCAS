@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Model.Specialization
 {
-    internal class SpecializationReqModel
+    public class SpecializationReqModel
     {
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;
     }
 }
