@@ -52,21 +52,21 @@ namespace HCAS.Domain.Features.Doctors
         #endregion
 
         #region RegisterDoctor
-        public async Task<Result<DoctorsReqModel>> RegisterDoctor(DoctorsReqModel dto)
+        public async Task<Result<DoctorsResModel>> RegisterDoctor(DoctorsReqModel dto)
         {
             try
             {
-                Result<DoctorsReqModel> model = new Result<DoctorsReqModel>();
+                Result<DoctorsResModel> model = new Result<DoctorsResModel>();
 
                 if (string.IsNullOrEmpty(dto.Name))
                 {
-                    model = Result<DoctorsReqModel>.ValidationError("Name is required");
+                    model = Result<DoctorsResModel>.ValidationError("Name is required");
                     goto Result;
                 }
 
                 if (dto.SpecializationId < 0)
                 {
-                    model = Result<DoctorsReqModel>.ValidationError("Invalid SpecializationId");
+                    model = Result<DoctorsResModel>.ValidationError("Invalid SpecializationId");
                     goto Result;
                 }
 
@@ -80,7 +80,7 @@ namespace HCAS.Domain.Features.Doctors
                                ,0
                             )";
 
-                var result = new DoctorsReqModel
+                var result = new DoctorsResModel
                 {
                     Name = dto.Name,
                     SpecializationId = dto.SpecializationId
@@ -92,11 +92,11 @@ namespace HCAS.Domain.Features.Doctors
 
                 if (createDoctor != 1)
                 {
-                    model = Result<DoctorsReqModel>.SystemError("Register Failed");
+                    model = Result<DoctorsResModel>.SystemError("Register Failed");
                     goto Result;
                 }
 
-                model = Result<DoctorsReqModel>.Success(result, "Doctor Registered Successfully");
+                model = Result<DoctorsResModel>.Success(result, "Doctor Registered Successfully");
 
             Result:
                 return model;
@@ -104,7 +104,7 @@ namespace HCAS.Domain.Features.Doctors
             }
             catch (Exception ex)
             {
-                return Result<DoctorsReqModel>.SystemError(ex.Message);
+                return Result<DoctorsResModel>.SystemError(ex.Message);
             }
         }
         #endregion
