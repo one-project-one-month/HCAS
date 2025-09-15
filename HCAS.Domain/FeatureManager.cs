@@ -21,7 +21,7 @@ namespace HCAS.Domain
             //dependency injections
             builder.Services.AddScoped<DapperService>();
             builder.Services.AddScoped<DoctorService>();
-            builder.Services.AddScoped<SpecializationSerivce>();
+            builder.Services.AddScoped<SpecializationSerivce>();         
         }
     }
 

@@ -25,7 +25,7 @@ namespace HCAS.Domain.Features.Specialization
             {
                 Result<IEnumerable<SpecializationResModel>> model = new Result<IEnumerable<SpecializationResModel>>();
 
-                var query = @"SELECT * FROM Specializations";
+                var query = @"SELECT * FROM Specializations WHERE del_flg = 0";
 
                 var result = _dapperService.Query<SpecializationResModel>(query);
 
