@@ -6,7 +6,20 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Model.Staff
 {
-    internal class StaffResModel
+    public class StaffResModel
     {
+        public int Id { get; set; }
+
+        public string Name { get; set; } = null!;
+        
+        public string Email { get; set; } = null!;
+        
+        public string? Phone { get; set; }
+        
+        public string? Role { get; set; }
+        
+        public string Username { get; set; } = null!;
+
+        public bool del_flg { get; set; }
     }
 }
