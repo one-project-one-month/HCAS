@@ -48,15 +48,15 @@ namespace HCAS.Domain.Features.Specialization
         #endregion
 
         #region RegisterSpecializations
-        public async Task<Result<SpecializationReqModel>> RegisterSpecializations(SpecializationReqModel dto)
+        public async Task<Result<SpecializationResModel>> RegisterSpecializations(SpecializationResModel dto)
         {
             try
             {
-                Result<SpecializationReqModel> model = new Result<SpecializationReqModel>();
+                Result<SpecializationResModel> model = new Result<SpecializationResModel>();
 
                 if (string.IsNullOrEmpty(dto.Name))
                 {
-                    model = Result<SpecializationReqModel>.ValidationError("Name is required");
+                    model = Result<SpecializationResModel>.ValidationError("Name is required");
                     goto Result;
                 }
 
@@ -64,12 +64,11 @@ namespace HCAS.Domain.Features.Specialization
                                ([Name]                              
                                ,[del_flg])
                          VALUES
-                              ( @Name
-		                       ,@SpecializationId
+                              ( @Name		                       
                                ,0
                             )";
 
-                var result = new SpecializationReqModel
+                var result = new SpecializationResModel
                 {
                     Name = dto.Name
                 };
@@ -78,11 +77,11 @@ namespace HCAS.Domain.Features.Specialization
 
                 if (createSpecializations != 1)
                 {
-                    model = Result<SpecializationReqModel>.SystemError("Register Failed");
+                    model = Result<SpecializationResModel>.SystemError("Register Failed");
                     goto Result;
                 }
 
-                model = Result<SpecializationReqModel>.Success(result, "Specializations Registered Successfully");
+                model = Result<SpecializationResModel>.Success(result, "Specializations Registered Successfully");
 
             Result:
                 return model;
@@ -90,7 +89,7 @@ namespace HCAS.Domain.Features.Specialization
             }
             catch (Exception ex)
             {
-                return Result<SpecializationReqModel>.SystemError(ex.Message);
+                return Result<SpecializationResModel>.SystemError(ex.Message);
             }
         }
         #endregion

@@ -14,7 +14,7 @@ namespace HCAS.Api.Controllers
 
         public SpecializationController(SpecializationSerivce specializationSerivce)
         {
-            _specializationSerivce = specializationSerivce;
+            _specializationSerivce = specializationSerivce;        
         }
 
         [HttpGet]
@@ -25,7 +25,7 @@ namespace HCAS.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RegisterSpecialization(SpecializationReqModel dto)
+        public async Task<IActionResult> RegisterSpecialization(SpecializationResModel dto)
         {
             var registerSpecialization = await _specializationSerivce.RegisterSpecializations(dto);
             return Ok(registerSpecialization.Data);
