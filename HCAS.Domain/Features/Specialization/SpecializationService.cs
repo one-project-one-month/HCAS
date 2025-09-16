@@ -31,10 +31,13 @@ namespace HCAS.Domain.Features.Specialization
 
                 if (result.Count < 0)
                 {
-                    model = Result<IEnumerable<SpecializationResModel>>.SystemError("No Data Found");
+                    model = Result<IEnumerable<SpecializationResModel>>.SystemError("No Data Found.");
                     goto Result;
                 }
-                model = Result<IEnumerable<SpecializationResModel>>.Success(result, query);
+
+                string message = (result.Count == 0) ? "No Data Found." : "Load Data Successful.";
+
+                model = Result<IEnumerable<SpecializationResModel>>.Success(result, message);
 
             Result:
                 return model;
