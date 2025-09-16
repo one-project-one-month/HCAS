@@ -9,7 +9,7 @@ namespace HCAS.Domain.Features.Model.Doctors
 {
     public class DoctorsReqModel
     {
-         public int Id { get; set; }
+        // public int Id { get; set; }
 
         public string Name { get; set; } = null!;
 

@@ -5,6 +5,7 @@ public class Result<T>
     public bool IsError { get { return !IsSuccess; } }
     public bool IsValidationError { get { return Type == EnumRespType.ValidationError; } }
     public bool IsSystemError { get { return Type == EnumRespType.SystemError; } }
+    public bool IsNotFound { get { return Type == EnumRespType.SystemError; } }
 
     private EnumRespType Type { get; set; }
     public T Data { get; set; }
@@ -69,6 +70,22 @@ public class Result<T>
 
     #endregion
 
+
+    #region NotFound
+
+    public static Result<T> NotFound(string message, T? data = default)
+    {
+        return new Result<T>()
+        {
+            IsSuccess = true,
+            Type = EnumRespType.NotFound,
+            Data = data,
+            Message = message
+        };
+    }
+
+    #endregion
+
     #region EnumRespType
 
     public enum EnumRespType
@@ -76,7 +93,8 @@ public class Result<T>
         None, 
         Success,
         ValidationError,
-        SystemError
+        SystemError,
+        NotFound
     }
 
     #endregion

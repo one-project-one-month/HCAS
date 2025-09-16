@@ -33,10 +33,10 @@ namespace HCAS.Api.Controllers
             return Ok(registerDoctor.Data);
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateDoctor(DoctorsReqModel dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorsReqModel dto)
         {
-            var updateDoctor = await _doctorService.UpdateDoctor(dto);
+            var updateDoctor = await _doctorService.UpdateDoctor(dto, id);
             return Ok(updateDoctor.Data);
         }
 

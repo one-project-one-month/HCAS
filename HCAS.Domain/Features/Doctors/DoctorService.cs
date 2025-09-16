@@ -1,5 +1,6 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Model.Doctors;
+using HCAS.Domain.Features.Model.Patient;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.IdentityModel.Tokens;
@@ -38,7 +39,9 @@ namespace HCAS.Domain.Features.Doctors
                     model = Result<IEnumerable<DoctorsResModel>>.SystemError("No Data Found");
                     goto Result;
                 }
-               model = Result<IEnumerable<DoctorsResModel>>.Success(result, query);
+
+                string message = (result.Count == 0) ? "No Doctor found" : "Success";
+                model = Result<IEnumerable<DoctorsResModel>>.Success(result, message);
 
             Result:
                 return model;
@@ -50,6 +53,7 @@ namespace HCAS.Domain.Features.Doctors
             }
         }
         #endregion
+
 
         #region RegisterDoctor
         public async Task<Result<DoctorsResModel>> RegisterDoctor(DoctorsReqModel dto)
@@ -110,79 +114,74 @@ namespace HCAS.Domain.Features.Doctors
         #endregion
 
         #region UpdateDoctor
-        public async Task<Result<DoctorsReqModel>> UpdateDoctor(DoctorsReqModel dto)
+      
+        public Task<Result<DoctorsReqModel>> UpdateDoctor(DoctorsReqModel dto, int id)
         {
             try
             {
-                Result<DoctorsReqModel> model = new Result<DoctorsReqModel>();
+                // Check if doctor exists using QueryFirstOrDefault
+                var doctorExistsQuery = "SELECT Id FROM Doctors WHERE Id = @Id";
+                var doctorExists = _dapperService.QueryFirstOrDefault<int?>(doctorExistsQuery, new { Id = id });
 
-                var doctorExistsQuery = "SELECT COUNT(1) FROM Doctors WHERE Id = @Id";
-
-                 if(doctorExistsQuery is null)
+                if (doctorExists == null)
                 {
-                    Result<DoctorsReqModel>.ValidationError("Doctor not found");
+                    return Task.FromResult(Result<DoctorsReqModel>.ValidationError("Doctor not found"));
                 }
 
-                var query = @"UPDATE [dbo].[Doctors]
-                               SET [Name] = @Name
-                                  ,[SpecializationId] = @SpecializationId
-                                  ,[del_flg] = 0
-                             WHERE Id = @Id";
+                // Update query
+                var updateQuery = @"
+            UPDATE [dbo].[Doctors]
+            SET [Name] = @Name,
+                [SpecializationId] = @SpecializationId,
+                [del_flg] = 0
+            WHERE Id = @Id";
 
-                var result = new DoctorsReqModel
+                var parameters = new
                 {
-                    Id = dto.Id,
+                    Id = id,
                     Name = dto.Name,
                     SpecializationId = dto.SpecializationId
                 };
 
-                var updateDoctor = await Task.Run(() => _dapperService.Execute(query, result));
+                var updatedRows = _dapperService.Execute(updateQuery, parameters);
 
-                if (updateDoctor != 1)
+                if (updatedRows != 1)
                 {
-                    model = Result<DoctorsReqModel>.SystemError("Update Failed");
-                    return model;
+                    return Task.FromResult(Result<DoctorsReqModel>.SystemError("Update Failed"));
                 }
 
-                model = Result<DoctorsReqModel>.Success(result, "Doctor Updated Successfully");
-                return model;
+                return Task.FromResult(Result<DoctorsReqModel>.Success(dto, "Doctor Updated Successfully"));
             }
             catch (Exception ex)
             {
-               
-                return Result<DoctorsReqModel>.SystemError(ex.Message);
+                return Task.FromResult(Result<DoctorsReqModel>.SystemError(ex.Message));
             }
         }
         #endregion
 
+
+
+
         #region DeleteDoctor
-        public async Task<Result<DoctorsReqModel>> DeleteDoctor(int id)
+        public Task<Result<DoctorsReqModel>> DeleteDoctor(int id)
         {
             try
             {
-                Result<DoctorsReqModel> model = new Result<DoctorsReqModel>();
-
-                var query = @"UPDATE [dbo].[Doctors] SET del_flg = 1
-                      WHERE Id = @Id";
-
+                var query = @"UPDATE [dbo].[Doctors] SET del_flg = 1 WHERE Id = @Id";
                 var parameters = new { Id = id };
 
-                var deleteDoctor = await Task.Run(() => _dapperService.Execute(query, parameters));
+                var deletedRows = _dapperService.Execute(query, parameters);
 
-                if (deleteDoctor != 1)
+                if (deletedRows != 1)
                 {
-                    model = Result<DoctorsReqModel>.ValidationError("Cannot be deleted");
-                    goto Result;
+                    return Task.FromResult(Result<DoctorsReqModel>.ValidationError("Cannot delete doctor"));
                 }
 
-                model = Result<DoctorsReqModel>.Success(new DoctorsReqModel { Id = id }, "Successfully deleted the doctor");
-
-            Result:
-                return model;
+                return Task.FromResult(Result<DoctorsReqModel>.Success(new DoctorsReqModel(), "Successfully deleted the doctor"));
             }
             catch (Exception ex)
             {
-                return Result<DoctorsReqModel>.SystemError(ex.Message);
+                return Task.FromResult(Result<DoctorsReqModel>.SystemError(ex.Message));
             }
         }
         #endregion

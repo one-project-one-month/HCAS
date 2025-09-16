@@ -40,5 +40,10 @@ namespace HCAS.Shared
             var result = db.Execute(query, param);
             return result;
         }
+
+        public void ExecuteScalar<T>(string doctorExistsQuery, object value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
