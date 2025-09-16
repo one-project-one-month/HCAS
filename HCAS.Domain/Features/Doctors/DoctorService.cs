@@ -113,22 +113,28 @@ namespace HCAS.Domain.Features.Doctors
         }
         #endregion
 
+
+
         #region UpdateDoctor
-      
-        public Task<Result<DoctorsReqModel>> UpdateDoctor(DoctorsReqModel dto, int id)
+        public async Task<Result<DoctorsResModel>> UpdateDoctor(DoctorsReqModel dto, int id)
         {
             try
             {
-                // Check if doctor exists using QueryFirstOrDefault
+                Result<DoctorsResModel> model = new Result<DoctorsResModel>();
+
+
                 var doctorExistsQuery = "SELECT Id FROM Doctors WHERE Id = @Id";
-                var doctorExists = _dapperService.QueryFirstOrDefault<int?>(doctorExistsQuery, new { Id = id });
+                var doctorExists = await Task.Run(() =>
+                    _dapperService.QueryFirstOrDefault<int?>(doctorExistsQuery, new { Id = id })
+                );
 
                 if (doctorExists == null)
                 {
-                    return Task.FromResult(Result<DoctorsReqModel>.ValidationError("Doctor not found"));
+                    model = Result<DoctorsResModel>.ValidationError("Doctor not found");
+                    goto Result;
                 }
 
-                // Update query
+
                 var updateQuery = @"
             UPDATE [dbo].[Doctors]
             SET [Name] = @Name,
@@ -143,30 +149,39 @@ namespace HCAS.Domain.Features.Doctors
                     SpecializationId = dto.SpecializationId
                 };
 
-                var updatedRows = _dapperService.Execute(updateQuery, parameters);
+                var updatedRows = await Task.Run(() => _dapperService.Execute(updateQuery, parameters));
 
                 if (updatedRows != 1)
                 {
-                    return Task.FromResult(Result<DoctorsReqModel>.SystemError("Update Failed"));
+                    model = Result<DoctorsResModel>.SystemError("Update Failed");
+                    goto Result;
                 }
 
-                return Task.FromResult(Result<DoctorsReqModel>.Success(dto, "Doctor Updated Successfully"));
+
+                model = Result<DoctorsResModel>.Success(new DoctorsResModel
+                {
+                    Id = id,
+                    Name = dto.Name,
+                    SpecializationId = dto.SpecializationId
+                }, "Doctor Updated Successfully");
+
+            Result:
+                return model;
             }
             catch (Exception ex)
             {
-                return Task.FromResult(Result<DoctorsReqModel>.SystemError(ex.Message));
+                return Result<DoctorsResModel>.SystemError(ex.Message);
             }
         }
         #endregion
 
-
-
-
         #region DeleteDoctor
-        public Task<Result<DoctorsReqModel>> DeleteDoctor(int id)
+        public async Task<Result<DoctorsReqModel>> DeleteDoctor(int id)
         {
             try
             {
+                Result<DoctorsReqModel> model = new Result<DoctorsReqModel>();
+
                 var query = @"UPDATE [dbo].[Doctors] SET del_flg = 1 WHERE Id = @Id";
                 var parameters = new { Id = id };
 
@@ -174,20 +189,23 @@ namespace HCAS.Domain.Features.Doctors
 
                 if (deletedRows != 1)
                 {
-                    return Task.FromResult(Result<DoctorsReqModel>.ValidationError("Cannot delete doctor"));
+                    model = Result<DoctorsReqModel>.ValidationError("Cannot delete doctor");
+                    goto Result;
                 }
 
-                return Task.FromResult(Result<DoctorsReqModel>.Success(new DoctorsReqModel(), "Successfully deleted the doctor"));
+                model = Result<DoctorsReqModel>.Success(new DoctorsReqModel(), "Successfully deleted the doctor");
+
+            Result:
+                return model;
             }
             catch (Exception ex)
             {
-                return Task.FromResult(Result<DoctorsReqModel>.SystemError(ex.Message));
+                return Result<DoctorsReqModel>.SystemError(ex.Message);
             }
+
+            #endregion
         }
-        #endregion
-
-
     }
-}; 
+ }; 
 
 

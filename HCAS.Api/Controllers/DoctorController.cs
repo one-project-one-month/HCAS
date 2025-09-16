@@ -34,13 +34,13 @@ namespace HCAS.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorsReqModel dto)
+        public async Task<IActionResult> UpdateDoctor(int id, DoctorsReqModel dto)
         {
             var updateDoctor = await _doctorService.UpdateDoctor(dto, id);
             return Ok(updateDoctor.Data);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
             var deleteDoctor = await _doctorService.DeleteDoctor(id);
