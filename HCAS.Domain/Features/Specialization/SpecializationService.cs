@@ -108,9 +108,9 @@ namespace HCAS.Domain.Features.Specialization
 
                 var checkSpecializationExitsQuery = "SELECT COUNT(1) FROM Specializations WHERE Id = @Id";
 
-                var resultExits = await Task.Run(() => _dapperService.Query<SpecializationResModel>(checkSpecializationExitsQuery, new { Id = id }));            
+                var resultExits = await _dapperService.QueryFirstOrDefaultAsync<SpecializationResModel>(checkSpecializationExitsQuery, new { Id = id });            
 
-                if (resultExits.Count < 0)
+                if (resultExits == null)
                 {
                     model =  Result<SpecializationReqModel>.ValidationError("Specialization not found");
                     return model;
@@ -126,7 +126,7 @@ namespace HCAS.Domain.Features.Specialization
                   Name = dto.Name
                 };      
 
-                var updateSpecializations = _dapperService.Execute(updateQuery, parameters);
+                var updateSpecializations = await _dapperService.ExecuteAsync(updateQuery, parameters);
 
                 if (updateSpecializations != 1)
                 {
