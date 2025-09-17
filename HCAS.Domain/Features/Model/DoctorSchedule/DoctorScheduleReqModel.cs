@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Model.DoctorSchedule
 {
-    internal class DoctorScheduleReqModel
+    public class DoctorScheduleReqModel
     {
+
+        public int DoctorId { get; set; }
+
+        public DateTime ScheduleDate { get; set; }
+
+        public int MaxPatients { get; set; }
+
     }
 }
