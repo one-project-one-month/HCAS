@@ -32,9 +32,9 @@ namespace HCAS.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateSpecialization(SpecializationReqModel dto)
+        public async Task<IActionResult> UpdateSpecialization(SpecializationReqModel dto, int id)
         {
-            var updateSpecialization = await _specializationSerivce.UpdateSpecializations(dto);
+            var updateSpecialization = await _specializationSerivce.UpdateSpecializations(dto,id);
             return Ok(updateSpecialization.Data);
         }
 

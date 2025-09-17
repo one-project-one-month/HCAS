@@ -1,4 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
+using HCAS.Domain.Features.Model.Doctors;
 using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HCAS.Domain.Features.Specialization
 {
@@ -98,40 +100,43 @@ namespace HCAS.Domain.Features.Specialization
         #endregion
 
         #region UpdateSpecializations
-        public async Task<Result<SpecializationReqModel>> UpdateSpecializations(SpecializationReqModel dto)
+        public async Task<Result<SpecializationReqModel>> UpdateSpecializations(SpecializationReqModel dto, int id)
         {
             try
             {
                 Result<SpecializationReqModel> model = new Result<SpecializationReqModel>();
 
-                var SpecializationsExistsQuery = "SELECT COUNT(1) FROM Specializations WHERE Id = @Id";
+                var checkSpecializationExitsQuery = "SELECT COUNT(1) FROM Specializations WHERE Id = @Id";
 
-                if (SpecializationsExistsQuery is null)
+                var resultExits = await Task.Run(() => _dapperService.Query<SpecializationResModel>(checkSpecializationExitsQuery, new { Id = id }));            
+
+                if (resultExits.Count < 0)
                 {
-                    Result<SpecializationReqModel>.ValidationError("Specializations not found");
+                    model =  Result<SpecializationReqModel>.ValidationError("Specialization not found");
+                    return model;
                 }
 
-                var query = @"UPDATE [dbo].[Specializations]
-                               SET [Name] = @Name                             
-                                  ,[del_flg] = 0
-                             WHERE Id = @Id";
+                var updateQuery = @"UPDATE [dbo].[Specializations]
+                            SET [Name] = @Name                             
+                                ,[del_flg] = 0
+                            WHERE Id = @Id";
 
-                var result = new SpecializationReqModel
-                {
-                    Id = dto.Id,
-                    Name = dto.Name
-                };
+                var parameters = new 
+                { Id = id,
+                  Name = dto.Name
+                };      
 
-                var updateSpecializations = await Task.Run(() => _dapperService.Execute(query, result));
+                var updateSpecializations = _dapperService.Execute(updateQuery, parameters);
 
                 if (updateSpecializations != 1)
                 {
                     model = Result<SpecializationReqModel>.SystemError("Update Failed");
-                    return model;
+                    return model;                    
                 }
 
-                model = Result<SpecializationReqModel>.Success(result, "Specializations Updated Successfully");
-                return model;
+                model = Result<SpecializationReqModel>.Success(dto, "Specialization Updated Successfully");
+                return model;             
+
             }
             catch (Exception ex)
             {
