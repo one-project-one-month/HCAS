@@ -1,7 +1,7 @@
 using HCAS.Domain;
 using HCAS.WebApp.Components;
-
-
+using MudBlazor.Services;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddRadzenComponents();
+builder.Services.AddMudServices();
+
 builder.AddDomain();
 
-
-
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
