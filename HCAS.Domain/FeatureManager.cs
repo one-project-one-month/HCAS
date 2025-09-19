@@ -19,9 +19,9 @@ namespace HCAS.Domain
             }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             //dependency injections
-            builder.Services.AddScoped<DapperService>();
-            builder.Services.AddScoped<DoctorService>();
-            builder.Services.AddScoped<DoctorScheduleService>();
+            builder.Services.AddTransient<DapperService>();
+            builder.Services.AddTransient<DoctorService>();
+            builder.Services.AddTransient<DoctorScheduleService>();
 
 
         }

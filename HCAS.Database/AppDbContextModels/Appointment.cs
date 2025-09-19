@@ -15,9 +15,11 @@ public partial class Appointment
 
     public DateTime AppointmentDate { get; set; }
 
-    public int? AppointmentNumber { get; set; }
+    public int AppointmentNumber { get; set; }
 
     public string Status { get; set; } = null!;
+
+    public bool DelFlg { get; set; }
 
     public virtual Doctor Doctor { get; set; } = null!;
 

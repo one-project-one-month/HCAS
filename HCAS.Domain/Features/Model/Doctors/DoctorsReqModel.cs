@@ -13,7 +13,7 @@ namespace HCAS.Domain.Features.Model.Doctors
 
         public string Name { get; set; } = null!;
 
-        public int? SpecializationId { get; set; }
+        public int SpecializationId { get; set; }
 
        // public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 

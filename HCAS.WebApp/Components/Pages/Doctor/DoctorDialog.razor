@@ -1,0 +1,86 @@
+﻿@using HCAS.Domain.Features.Doctors
+@using HCAS.Domain.Features.Model.Doctors
+@inject DoctorService DoctorService
+
+<MudDialog Style="height: 400px; width: 400px;">
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Doctor" : "Add Doctor")</MudText>
+
+            <MudTextField @bind-Value="doctorModel.Name" Label="Name" Required="true" />
+            <MudSelect T="int" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
+                @foreach (var spec in Specializations)
+                {
+                    <MudSelectItem Value="spec.Id">@spec.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="SaveDoctor">Save</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public DoctorsResModel Doctor { get; set; }
+
+    private DoctorsReqModel doctorModel = new();
+    private List<SpecializationModel> Specializations = new();
+    private bool _loading = false;
+    private bool _isEdit => Doctor != null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+
+        if (_isEdit)
+        {
+            doctorModel = new DoctorsReqModel
+            {
+                Name = Doctor.Name,
+                SpecializationId = Doctor.SpecializationId
+            };
+        }
+
+        var result = await DoctorService.GetSpecializationsAsync();
+        Specializations = result?.ToList() ?? new();
+
+        _loading = false;
+    }
+
+    private async Task SaveDoctor()
+    {
+        if (string.IsNullOrWhiteSpace(doctorModel.Name) || doctorModel.SpecializationId == 0)
+            return;
+
+        _loading = true;
+
+        Result<DoctorsResModel> result;
+        if (_isEdit)
+        {
+            result = await DoctorService.UpdateDoctorAsync(Doctor.Id, doctorModel);
+        }
+        else
+        {
+            result = await DoctorService.RegisterDoctorAsync(doctorModel);
+        }
+
+        _loading = false;
+
+        if (result.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

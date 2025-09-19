@@ -1,5 +1,6 @@
 using HCAS.Domain;
 using HCAS.WebApp.Components;
+using HCAS.WebApp.Services;
 using MudBlazor.Services;
 using Radzen;
 
@@ -11,6 +12,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddRadzenComponents();
 builder.Services.AddMudServices();
+
+builder.Services.AddScoped<InjectService>();
 
 builder.AddDomain();
 

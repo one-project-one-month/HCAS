@@ -1,0 +1,21 @@
+﻿@inject IDialogService DialogService
+@inject IMudDialogInstance MudDialog
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1">@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="@Color" OnClick="Confirm">@ButtonText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string ContentText { get; set; } = "Are you sure want to proceed?";
+    [Parameter] public string ButtonText { get; set; } = "Confirm";
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+
+    void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}
