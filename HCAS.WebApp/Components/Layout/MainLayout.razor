@@ -1,19 +1,26 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div class="page d-flex flex-column min-vh-100">
+
+    <header>
+        <Navbar />
+    </header>
+
+    <div class="d-flex flex-grow-1">
+
+        <aside class="sidebar">
+            <NavMenu />
+        </aside>
+
+        <main class="flex-grow-1">
+            <div class="content-wrapper">
+                <article>
+                    @Body
+                </article>
+            </div>
+        </main>
+
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
 
 <div id="blazor-error-ui">

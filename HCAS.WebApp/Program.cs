@@ -1,6 +1,8 @@
 using HCAS.Domain;
 using HCAS.WebApp.Components;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,7 +11,11 @@ builder.Services.AddRazorComponents()
 
 builder.AddDomain();
 
+
+
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

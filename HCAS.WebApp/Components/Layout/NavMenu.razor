@@ -1,30 +1,66 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">HCAS.WebApp</a>
+﻿<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index3.html" class="brand-link">
+        <span class="brand-text font-weight-light">HCAS</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+
+                <!-- Dashboard -->
+                <li class="nav-item has-treeview menu-open">
+                    <a href="#" class="nav-link active">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Staff -->
+                <li class="nav-item">
+                    <a href="/Staff" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Staff</p>
+                    </a>
+                </li>
+
+
+                <!-- Doctor -->
+                <li class="nav-item">
+                    <a href="/Doctor" class="nav-link">
+                        <i class="nav-icon fas fa-user-md"></i>
+                        <p>Doctor</p>
+                    </a>
+                </li>
+
+                <!-- Doctor Schedule -->
+                <li class="nav-item">
+                    <a href="/DoctorSchedule" class="nav-link">
+                        <i class="nav-icon fas fa-calendar-check"></i>
+                        <p>Doctor Schedule</p>
+                    </a>
+                </li>
+
+                <!-- Appointment -->
+                <li class="nav-item">
+                    <a href="/Appoinment" class="nav-link">
+                        <i class="nav-icon fas fa-notes-medical"></i>
+                        <p>Appointment</p>
+                    </a>
+                </li>
+
+            
+                <!-- Patient -->
+                <li class="nav-item">
+                    <a href="/Patient" class="nav-link">
+                        <i class="nav-icon fas fa-procedures"></i>
+                        <p>Patient</p>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
     </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+</aside>
