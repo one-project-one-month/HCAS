@@ -1,5 +1,6 @@
 ﻿@using HCAS.Domain.Features.Doctors
 @using HCAS.Domain.Features.Model.Doctors
+@using MudBlazor
 @inject DoctorService DoctorService
 
 <MudDialog Style="height: 400px; width: 400px;">
@@ -13,12 +14,13 @@
             <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Doctor" : "Add Doctor")</MudText>
 
             <MudTextField @bind-Value="doctorModel.Name" Label="Name" Required="true" />
-            <MudSelect T="int" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
+            <MudSelect T="int?" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
                 @foreach (var spec in Specializations)
                 {
                     <MudSelectItem Value="spec.Id">@spec.Name</MudSelectItem>
                 }
             </MudSelect>
+
         }
     </DialogContent>
 
