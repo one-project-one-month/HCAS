@@ -15,7 +15,9 @@
 
             <MudTextField @bind-Value="doctorModel.Name" Label="Name" Required="true" />
 
+        
             <MudSelect T="int" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
+              <MudSelectItem Value="0" Disabled="true">Select specialization</MudSelectItem>
                 @foreach (var spec in Specializations)
                 {
                     <MudSelectItem Value="@spec.Id">@spec.Name</MudSelectItem>
@@ -83,6 +85,8 @@
         {
             MudDialog.Close(DialogResult.Ok(true));
         }
+
+     
     }
 
     private void Cancel()

@@ -18,29 +18,29 @@
 
 	<div class="d-flex mb-2">
 		<RadzenTextBox @bind-Value="searchTerm"
-					   Placeholder="Search by name..."
-					   Style="width:200px;"
-					   Change="OnSearchChanged" />
+		Placeholder="Search by name..."
+		Style="width:200px;"
+		Change="OnSearchChanged" />
 
 		<RadzenDropDown Data="@specializations"
-						TextProperty="Name"
-						ValueProperty="Id"
-						@bind-Value="selectedSpecialization"
-						Placeholder="Specialization"
-						Style="width:200px; margin-left:10px;"
-						Change="OnFilterChanged" />
+		TextProperty="Name"
+		ValueProperty="Id"
+		@bind-Value="selectedSpecialization"
+		Placeholder="Specialization"
+		Style="width:200px; margin-left:10px;"
+		Change="OnFilterChanged" />
 
 		<MudButton Variant="MudBlazor.Variant.Filled"
-				   Color="Color.Primary"
-				   OnClick="ShowAddDialog"
-				   Style="margin-left:10px;">
+		Color="Color.Primary"
+		OnClick="ShowAddDialog"
+		Style="margin-left:10px;">
 			Add Doctor
 		</MudButton>
 	</div>
 
 	<MudTable Items="pagedDoctors"
-			  Hover="true"
-			  Bordered="true">
+	Hover="true"
+	Bordered="true">
 		<HeaderContent>
 			<MudTh>Actions</MudTh>
 			<MudTh>No.</MudTh>
@@ -50,15 +50,15 @@
 		<RowTemplate>
 			<MudTd DataLabel="Actions">
 				<MudIconButton Icon="@Icons.Material.Filled.Edit"
-							   Variant="MudBlazor.Variant.Outlined"
-							   Color="Color.Primary"
-							   OnClick="@(() => ShowEditDialog(context))"
-							   Size="Size.Small" />
+				Variant="MudBlazor.Variant.Outlined"
+				Color="Color.Primary"
+				OnClick="@(() => ShowEditDialog(context))"
+				Size="Size.Small" />
 				<MudIconButton Icon="@Icons.Material.Filled.Delete"
-							   Variant="MudBlazor.Variant.Outlined"
-							   Color="Color.Error"
-							   OnClick="@(() => DeleteDoctor(context.Id))"
-							   Size="Size.Small" />
+				Variant="MudBlazor.Variant.Outlined"
+				Color="Color.Error"
+				OnClick="@(() => DeleteDoctor(context.Id))"
+				Size="Size.Small" />
 			</MudTd>
 			<MudTd DataLabel="No.">@((page - 1) * pageSize + @pagedDoctors.IndexOf(context) + 1)</MudTd>
 			<MudTd DataLabel="Name">@context.Name</MudTd>
@@ -67,11 +67,11 @@
 	</MudTable>
 
 	<MudPagination Rectangular="true"
-				   Variant="MudBlazor.Variant.Outlined"
-				   SelectedChanged="PageChanged"
-				   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
-				   Class="pa-4"
-				   Selected="page" />
+	Variant="MudBlazor.Variant.Outlined"
+	SelectedChanged="PageChanged"
+	Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+	Class="pa-4"
+	Selected="page" />
 </MudPaper>
 
 @code {
@@ -139,42 +139,43 @@
 
 	async Task ShowAddDialog()
 	{
-		var dialog = await DialogService.ShowAsync<DoctorDialog>("Add Doctor");
+		var dialog = await DialogService.ShowAsync<DoctorDialog>();
 		await dialog.Result;
 		await LoadDoctors();
 	}
 
 	async Task ShowEditDialog(DoctorsResModel doctor)
 	{
-		var parameters = new DialogParameters
+		var parameters = new DialogParameters { { "Doctor", doctor } };
+		var dialog = await DialogService.ShowAsync<DoctorDialog>(null, parameters);
+		
+		if (!dialog.Result.IsCanceled) 
 		{
-			{ "Doctor", doctor }
-		};
-
-		var dialog = await DialogService.ShowAsync<DoctorDialog>("Edit Doctor", parameters);
-		await dialog.Result;
+			await LoadDoctors();
+		}
 		await LoadDoctors();
 	}
 
-	async Task DeleteDoctor(int id)
+
+	private async Task DeleteDoctor(int id)
 	{
 		var doctor = pagedDoctors.FirstOrDefault(d => d.Id == id);
 		if (doctor == null) return;
 
-		var confirmed = await InjectService.ShowConfirmAsync(
-			$"Are you sure you want to delete Dr. {doctor.Name}?",
-			"Confirm",
-			"Delete",
-			Color.Error
-		);
 
-		if (confirmed)
+		bool confirmed = await DialogService.ShowMessageBox(
+			"Confirm Delete",
+			$"Are you sure you want to delete Dr. {doctor.Name}?",
+			yesText: "Delete", cancelText: "Cancel"
+		) ?? false;
+
+		if (!confirmed) return;
+
+		var result = await doctorService.DeleteDoctorAsync(id);
+		if (result.IsSuccess)
 		{
-			var result = await doctorService.DeleteDoctorAsync(id);
-			if (result.IsSuccess)
-			{
-				await LoadDoctors();
-			}
+			await LoadDoctors();
 		}
+
 	}
 }
