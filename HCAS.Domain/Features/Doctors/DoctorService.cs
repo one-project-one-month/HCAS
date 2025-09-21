@@ -35,7 +35,7 @@ public class DoctorService
         Id = doctor.Id,
         Name = doctor.Name,
         SpecializationId = doctor.SpecializationId,
-        del_flg = doctor.del_flg
+        DelFlg = doctor.DelFlg
     };
 
     private static Result<T> ValidateDoctorDto<T>(DoctorsReqModel dto)
@@ -56,7 +56,7 @@ public class DoctorService
         {
             var query = _dbContext.Doctors
                 .Include(d => d.Specialization)
-                .Where(d => !d.del_flg);
+                .Where(d => !d.DelFlg);
 
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(d => d.Name.Contains(search));
@@ -100,7 +100,7 @@ public class DoctorService
             {
                 Name = dto.Name,
                 SpecializationId = dto.SpecializationId,
-                del_flg = false
+                DelFlg = false
             };
 
             _dbContext.Doctors.Add(doctor);
@@ -122,7 +122,7 @@ public class DoctorService
         try
         {
             var doctor = await _dbContext.Doctors.FindAsync(id);
-            if (doctor is null || doctor.del_flg)
+            if (doctor is null || doctor.DelFlg)
                 return Result<DoctorsResModel>.NotFound("Doctor not found");
 
             doctor.Name = dto.Name;
@@ -143,10 +143,10 @@ public class DoctorService
         try
         {
             var doctor = await _dbContext.Doctors.FindAsync(id);
-            if (doctor is null || doctor.del_flg)
+            if (doctor is null || doctor.DelFlg)
                 return Result<bool>.NotFound("Doctor not found");
 
-            doctor.del_flg = true;
+            doctor.DelFlg = true;
             await _dbContext.SaveChangesAsync();
 
             return Result<bool>.DeleteSuccess("Doctor deleted successfully");

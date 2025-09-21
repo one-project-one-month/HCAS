@@ -14,43 +14,44 @@
             <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Doctor" : "Add Doctor")</MudText>
 
             <MudTextField @bind-Value="doctorModel.Name" Label="Name" Required="true" />
-            <MudSelect T="int?" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
+
+            <MudSelect T="int" Label="Specialization" @bind-Value="doctorModel.SpecializationId" Required="true">
                 @foreach (var spec in Specializations)
                 {
-                    <MudSelectItem Value="spec.Id">@spec.Name</MudSelectItem>
+                    <MudSelectItem Value="@spec.Id">@spec.Name</MudSelectItem>
                 }
             </MudSelect>
-
         }
     </DialogContent>
 
     <DialogActions>
+        <!-- Parameterless methods match MudButton.OnClick -->
         <MudButton Color="Color.Primary" OnClick="SaveDoctor">Save</MudButton>
         <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public DoctorsResModel Doctor { get; set; }
+    [Parameter] public DoctorsResModel? Doctor { get; set; }
 
     private DoctorsReqModel doctorModel = new();
     private List<SpecializationModel> Specializations = new();
     private bool _loading = false;
-    private bool _isEdit => Doctor != null;
+    private bool _isEdit => Doctor is not null;
 
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
 
-        if (_isEdit)
+        if (_isEdit && Doctor is not null)
         {
             doctorModel = new DoctorsReqModel
-            {
-                Name = Doctor.Name,
-                SpecializationId = Doctor.SpecializationId
-            };
+                {
+                    Name = Doctor.Name,
+                    SpecializationId = Doctor.SpecializationId
+                };
         }
 
         var result = await DoctorService.GetSpecializationsAsync();
@@ -67,7 +68,7 @@
         _loading = true;
 
         Result<DoctorsResModel> result;
-        if (_isEdit)
+        if (_isEdit && Doctor is not null)
         {
             result = await DoctorService.UpdateDoctorAsync(Doctor.Id, doctorModel);
         }
@@ -84,5 +85,8 @@
         }
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
 }
