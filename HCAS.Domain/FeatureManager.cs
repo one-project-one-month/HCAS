@@ -1,6 +1,6 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Features.Staff;
+using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,10 @@ namespace HCAS.Domain
             }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             //dependency injections
-            builder.Services.AddScoped<DapperService>();
-            builder.Services.AddScoped<DoctorService>();
-            builder.Services.AddScoped<StaffService>();
+            builder.Services.AddTransient<DapperService>();
+            builder.Services.AddTransient<DoctorService>();
+            builder.Services.AddTransient<DoctorScheduleService>();
+
 
         }
     }

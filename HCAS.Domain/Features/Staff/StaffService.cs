@@ -37,7 +37,7 @@ namespace HCAS.Domain.Features.Staff
                     ResModel = Result<IEnumerable<StaffResModel>>.SystemError("No staffs found.");
                     goto Result;
                 }
-                ResModel = Result<IEnumerable<StaffResModel>>.Success(staffs, query);
+                ResModel = Result<IEnumerable<StaffResModel>>.Success(staffs, "staffs found.");
 
             Result:
                 return ResModel;

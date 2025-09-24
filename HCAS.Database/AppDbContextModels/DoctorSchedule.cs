@@ -13,10 +13,9 @@ public partial class DoctorSchedule
 
     public int? MaxPatients { get; set; }
 
+    public bool? DelFlg { get; set; }
+
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual Doctor? Doctor { get; set; }
-
-    public bool del_flg { get; set; }
-
 }

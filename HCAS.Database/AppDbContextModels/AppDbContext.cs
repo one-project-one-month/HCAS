@@ -27,57 +27,66 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Staff> Staff { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=.;Database=HealthCareDB;User ID=sa;Password=sasa@123;TrustServerCertificate=True;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Appointment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Appointm__3214EC070E9C5EFF");
+            entity.HasKey(e => e.Id).HasName("PK__Appointm__3214EC07859156F1");
 
             entity.Property(e => e.AppointmentDate).HasColumnType("datetime");
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.Status).HasMaxLength(50);
 
             entity.HasOne(d => d.Doctor).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.DoctorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Appointme__Docto__571DF1D5");
+                .HasConstraintName("FK__Appointme__Docto__534D60F1");
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.PatientId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Appointme__Patie__5812160E");
+                .HasConstraintName("FK__Appointme__Patie__5441852A");
 
             entity.HasOne(d => d.Schedule).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.ScheduleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Appointme__Sched__5629CD9C");
+                .HasConstraintName("FK__Appointme__Sched__5535A963");
         });
 
         modelBuilder.Entity<Doctor>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Doctors__3214EC070DAC4D58");
+            entity.HasKey(e => e.Id).HasName("PK__Doctors__3214EC078585C090");
 
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.Name).HasMaxLength(255);
 
             entity.HasOne(d => d.Specialization).WithMany(p => p.Doctors)
                 .HasForeignKey(d => d.SpecializationId)
-                .HasConstraintName("FK__Doctors__Special__398D8EEE");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Doctors__Special__5629CD9C");
         });
 
         modelBuilder.Entity<DoctorSchedule>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__DoctorSc__3214EC070D98572B");
+            entity.HasKey(e => e.Id).HasName("PK__DoctorSc__3214EC07525596C8");
 
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.ScheduleDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Doctor).WithMany(p => p.DoctorSchedules)
                 .HasForeignKey(d => d.DoctorId)
-                .HasConstraintName("FK__DoctorSch__Docto__440B1D61");
+                .HasConstraintName("FK__DoctorSch__Docto__571DF1D5");
         });
 
         modelBuilder.Entity<Patient>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Patients__3214EC071AECA686");
+            entity.HasKey(e => e.Id).HasName("PK__Patients__3214EC07B95EC89D");
 
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.Gender).HasMaxLength(50);
             entity.Property(e => e.Name).HasMaxLength(255);
@@ -86,18 +95,20 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Specialization>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Speciali__3214EC07ADE8FC2F");
+            entity.HasKey(e => e.Id).HasName("PK__Speciali__3214EC07EF19A016");
 
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.Name).HasMaxLength(255);
         });
 
         modelBuilder.Entity<Staff>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Staff__3214EC070E552346");
+            entity.HasKey(e => e.Id).HasName("PK__Staff__3214EC07C90B05FE");
 
+            entity.Property(e => e.DelFlg).HasColumnName("del_flg");
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.Name).HasMaxLength(255);
-            entity.Property(e => e.Password).HasMaxLength(255);
+           // entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(15);
             entity.Property(e => e.Role).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);

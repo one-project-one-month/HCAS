@@ -1,11 +1,19 @@
 using HCAS.Domain;
 using HCAS.WebApp.Components;
+using HCAS.WebApp.Services;
+using MudBlazor.Services;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddRadzenComponents();
+builder.Services.AddMudServices();
+
+builder.Services.AddScoped<InjectService>();
 
 builder.AddDomain();
 

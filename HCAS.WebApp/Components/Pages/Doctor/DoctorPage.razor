@@ -1,0 +1,181 @@
+﻿@page "/Doctor"
+@inject DoctorService doctorService
+@inject IDialogService DialogService
+@inject InjectService InjectService
+
+@using HCAS.Domain.Features.Doctors
+@using HCAS.Domain.Features.Model.Doctors
+@using HCAS.WebApp.Components.Common
+@using HCAS.WebApp.Services
+@using MudBlazor
+@using Radzen.Blazor
+@using static HCAS.WebApp.Components.Pages.Doctor.DoctorDialog
+
+<PageTitle>Doctors</PageTitle>
+
+<MudPaper Class="pa-4">
+	<MudText Typo="Typo.h5">Doctors</MudText>
+
+	<div class="d-flex mb-2">
+		<RadzenTextBox @bind-Value="searchTerm"
+		Placeholder="Search by name..."
+		Style="width:200px;"
+		Change="OnSearchChanged" />
+
+		<RadzenDropDown Data="@specializations"
+		TextProperty="Name"
+		ValueProperty="Id"
+		@bind-Value="selectedSpecialization"
+		Placeholder="Specialization"
+		Style="width:200px; margin-left:10px;"
+		Change="OnFilterChanged" />
+
+		<MudButton Variant="MudBlazor.Variant.Filled"
+		Color="Color.Primary"
+		OnClick="ShowAddDialog"
+		Style="margin-left:10px;">
+			Add Doctor
+		</MudButton>
+	</div>
+
+	<MudTable Items="pagedDoctors"
+	Hover="true"
+	Bordered="true">
+		<HeaderContent>
+			<MudTh>Actions</MudTh>
+			<MudTh>No.</MudTh>
+			<MudTh>Name</MudTh>
+			<MudTh>Specialization</MudTh>
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd DataLabel="Actions">
+				<MudIconButton Icon="@Icons.Material.Filled.Edit"
+				Variant="MudBlazor.Variant.Outlined"
+				Color="Color.Primary"
+				OnClick="@(() => ShowEditDialog(context))"
+				Size="Size.Small" />
+				<MudIconButton Icon="@Icons.Material.Filled.Delete"
+				Variant="MudBlazor.Variant.Outlined"
+				Color="Color.Error"
+				OnClick="@(() => DeleteDoctor(context.Id))"
+				Size="Size.Small" />
+			</MudTd>
+			<MudTd DataLabel="No.">@((page - 1) * pageSize + @pagedDoctors.IndexOf(context) + 1)</MudTd>
+			<MudTd DataLabel="Name">@context.Name</MudTd>
+			<MudTd DataLabel="Specialization">@GetSpecializationName(context.SpecializationId)</MudTd>
+		</RowTemplate>
+	</MudTable>
+
+	<MudPagination Rectangular="true"
+	Variant="MudBlazor.Variant.Outlined"
+	SelectedChanged="PageChanged"
+	Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+	Class="pa-4"
+	Selected="page" />
+</MudPaper>
+
+@code {
+	List<DoctorsResModel> pagedDoctors = new();
+	List<SpecializationModel> specializations = new();
+
+	int page = 1;
+	int pageSize = 10;
+	int totalCount = 0;
+	string searchTerm = string.Empty;
+	int? selectedSpecialization = null;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadSpecializations();
+		await LoadDoctors();
+	}
+
+	async Task LoadDoctors()
+	{
+		var result = await doctorService.GetDoctorsAsync(page, pageSize, searchTerm, selectedSpecialization);
+		if (result.IsSuccess)
+		{
+			pagedDoctors = result.Data.Items.ToList();
+			totalCount = result.Data.TotalCount;
+		}
+		else
+		{
+			pagedDoctors = new();
+			totalCount = 0;
+		}
+		StateHasChanged();
+	}
+
+	async Task LoadSpecializations()
+	{
+		var result = await doctorService.GetSpecializationsAsync();
+		specializations = result?.ToList() ?? new();
+	}
+
+	void PageChanged(int newPage)
+	{
+		page = newPage;
+		_ = LoadDoctors();
+	}
+
+	void OnSearchChanged(object value)
+	{
+		searchTerm = value?.ToString() ?? string.Empty;
+		page = 1;
+		_ = LoadDoctors();
+	}
+
+	void OnFilterChanged(object value)
+	{
+		selectedSpecialization = value as int?;
+		page = 1;
+		_ = LoadDoctors();
+	}
+
+	string GetSpecializationName(int? id)
+	{
+		return specializations.FirstOrDefault(s => s.Id == id)?.Name ?? "";
+	}
+
+	async Task ShowAddDialog()
+	{
+		var dialog = await DialogService.ShowAsync<DoctorDialog>();
+		await dialog.Result;
+		await LoadDoctors();
+	}
+
+	async Task ShowEditDialog(DoctorsResModel doctor)
+	{
+		var parameters = new DialogParameters { { "Doctor", doctor } };
+		var dialog = await DialogService.ShowAsync<DoctorDialog>(null, parameters);
+		
+		if (!dialog.Result.IsCanceled) 
+		{
+			await LoadDoctors();
+		}
+		await LoadDoctors();
+	}
+
+
+	private async Task DeleteDoctor(int id)
+	{
+		var doctor = pagedDoctors.FirstOrDefault(d => d.Id == id);
+		if (doctor == null) return;
+
+
+		bool confirmed = await DialogService.ShowMessageBox(
+			"Confirm Delete",
+			$"Are you sure you want to delete Dr. {doctor.Name}?",
+			yesText: "Delete", cancelText: "Cancel"
+		) ?? false;
+
+		if (!confirmed) return;
+
+		var result = await doctorService.DeleteDoctorAsync(id);
+		if (result.IsSuccess)
+		{
+			await LoadDoctors();
+		}
+
+	}
+}
