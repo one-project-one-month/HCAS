@@ -13,17 +13,27 @@ namespace HCAS.Domain
     {
         public static void AddDomain(this WebApplicationBuilder builder)
         {
-            builder.Services.AddDbContext<AppDbContext>(opt =>
+            // Configure DbContext with retry-on-failure
+            builder.Services.AddDbContext<AppDbContext>(options =>
             {
-                opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
-            }, ServiceLifetime.Transient, ServiceLifetime.Transient);
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DbConnection"),
+                    sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,              
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorNumbersToAdd: null        
+                        );
+                    });
+            });
 
-            //dependency injections
+            // Register services
             builder.Services.AddTransient<DapperService>();
-            builder.Services.AddTransient<DoctorService>();
-            builder.Services.AddTransient<DoctorScheduleService>();
-
-
+            builder.Services.AddScoped<DoctorService>();
+            builder.Services.AddScoped<DoctorScheduleService>();
+            builder.Services.AddScoped<Specialization>();
+            builder.Services.AddScoped<Staff>();
         }
     }
 

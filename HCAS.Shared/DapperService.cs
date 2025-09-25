@@ -16,7 +16,7 @@ namespace HCAS.Shared
 
         public DapperService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DbConnection");
+            _connectionString = configuration.GetConnectionString("DbConnection")!;
         }
 
         public List<T> Query<T>(string query, object? param = null)
