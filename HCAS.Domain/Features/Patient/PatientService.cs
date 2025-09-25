@@ -47,6 +47,7 @@ namespace HCAS.Domain.Features.Patient
             }
         }
         #endregion
+       
         #region GetById
         public async Task<Result<PatientResModel>> GetById(int id)
         {
@@ -79,6 +80,7 @@ namespace HCAS.Domain.Features.Patient
             }
         }
         #endregion
+      
         #region UpdatePatient
         public async Task<Result<PatientResModel>> UpdatePatient(PatientReqModel patientReqModel,int id)
         {
@@ -144,6 +146,7 @@ UPDATE [dbo].[Patients]
             }
         }
         #endregion
+     
         #region CreatePatient
         public async Task<Result<PatientReqModel>> RegisterPatient(PatientReqModel reqModel)
         {
@@ -192,6 +195,7 @@ UPDATE [dbo].[Patients]
             
         }
         #endregion
+      
         #region DeletePatient
         public async Task<Result<PatientReqModel>> DeletePatient(int  id)
         {
