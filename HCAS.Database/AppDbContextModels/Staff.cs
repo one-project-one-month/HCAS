@@ -11,13 +11,13 @@ public partial class Staff
 
     public string Email { get; set; } = null!;
 
-    public string? Phone { get; set; }
+    public string Phone { get; set; } = null!;
 
-    public string? Role { get; set; }
+    public string Role { get; set; } = null!;
 
     public string Username { get; set; } = null!;
 
     public string Password { get; set; } = null!;
-    public bool del_flg { get; set; }
 
+    public bool DelFlg { get; set; }
 }

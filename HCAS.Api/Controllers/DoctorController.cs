@@ -3,6 +3,8 @@ using HCAS.Domain.Features.Model.Doctors;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HCAS.Api.Controllers
 {
@@ -17,35 +19,71 @@ namespace HCAS.Api.Controllers
             _doctorService = doctorService;
         }
 
+        // GET: api/v1/Doctor
+        // Supports pagination, search, and filter by specialization
         [HttpGet]
-        public async Task<IActionResult> GetDoctorList()
+        public async Task<IActionResult> GetDoctors(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] int? specializationId = null)
         {
-            var doctorList = await _doctorService.GetAllDoctorsList();
+            var result = await _doctorService.GetDoctorsAsync(page, pageSize, search, specializationId);
+            if (result.IsNotFound)
+                return NotFound(result.Message);
 
-            return Ok(doctorList.Data);
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+
+            return Ok(result.Data);
         }
 
-
+        // POST: api/v1/Doctor
         [HttpPost]
-        public async Task<IActionResult> RegisterDoctor(DoctorsReqModel dto)
+        public async Task<IActionResult> RegisterDoctor([FromBody] DoctorsReqModel dto)
         {
-            var registerDoctor = await _doctorService.RegisterDoctor(dto);
-            return Ok(registerDoctor.Data);
+            var result = await _doctorService.RegisterDoctorAsync(dto);
+
+            if (result.IsValidationError)
+                return BadRequest(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+
+            return Ok(result.Data);
         }
 
+        // PUT: api/v1/Doctor/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorsReqModel dto)
         {
-            var updateDoctor = await _doctorService.UpdateDoctor(dto, id);
-            return Ok(updateDoctor.Data);
+            var result = await _doctorService.UpdateDoctorAsync(id, dto);
+
+            if (result.IsValidationError)
+                return BadRequest(result.Message);
+
+            if (result.IsNotFound)
+                return NotFound(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+
+            return Ok(result.Data);
         }
 
-        [HttpDelete]
+        // DELETE: api/v1/Doctor/{id}
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
-            var deleteDoctor = await _doctorService.DeleteDoctor(id);
-            return Ok(deleteDoctor.Data);
-        }
+            var result = await _doctorService.DeleteDoctorAsync(id);
 
+            if (result.IsNotFound)
+                return NotFound(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+
+            return Ok(result.Message);
+        }
     }
 }

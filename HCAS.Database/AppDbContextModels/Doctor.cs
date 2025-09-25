@@ -9,14 +9,13 @@ public partial class Doctor
 
     public string Name { get; set; } = null!;
 
-    public int? SpecializationId { get; set; }
+    public int SpecializationId { get; set; }
+
+    public bool DelFlg { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual ICollection<DoctorSchedule> DoctorSchedules { get; set; } = new List<DoctorSchedule>();
 
-    public virtual Specialization? Specialization { get; set; }
-
-    public bool del_flg { get; set; }
-
+    public virtual Specialization Specialization { get; set; } = null!;
 }

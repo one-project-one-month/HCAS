@@ -1,4 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
+using HCAS.Domain.Features.Model.Doctors;
 using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HCAS.Domain.Features.Specialization
 {
@@ -25,16 +27,19 @@ namespace HCAS.Domain.Features.Specialization
             {
                 Result<IEnumerable<SpecializationResModel>> model = new Result<IEnumerable<SpecializationResModel>>();
 
-                var query = @"SELECT * FROM Specializations";
+                var query = @"SELECT * FROM Specializations WHERE del_flg = 0";
 
                 var result = _dapperService.Query<SpecializationResModel>(query);
 
                 if (result.Count < 0)
                 {
-                    model = Result<IEnumerable<SpecializationResModel>>.SystemError("No Data Found");
+                    model = Result<IEnumerable<SpecializationResModel>>.SystemError("No Data Found.");
                     goto Result;
                 }
-                model = Result<IEnumerable<SpecializationResModel>>.Success(result, query);
+
+                string message = (result.Count == 0) ? "No Data Found." : "Load Data Successful.";
+
+                model = Result<IEnumerable<SpecializationResModel>>.Success(result, message);
 
             Result:
                 return model;
@@ -48,15 +53,15 @@ namespace HCAS.Domain.Features.Specialization
         #endregion
 
         #region RegisterSpecializations
-        public async Task<Result<SpecializationReqModel>> RegisterSpecializations(SpecializationReqModel dto)
+        public async Task<Result<SpecializationResModel>> RegisterSpecializations(SpecializationResModel dto)
         {
             try
             {
-                Result<SpecializationReqModel> model = new Result<SpecializationReqModel>();
+                Result<SpecializationResModel> model = new Result<SpecializationResModel>();
 
                 if (string.IsNullOrEmpty(dto.Name))
                 {
-                    model = Result<SpecializationReqModel>.ValidationError("Name is required");
+                    model = Result<SpecializationResModel>.ValidationError("Name is required");
                     goto Result;
                 }
 
@@ -64,12 +69,11 @@ namespace HCAS.Domain.Features.Specialization
                                ([Name]                              
                                ,[del_flg])
                          VALUES
-                              ( @Name
-		                       ,@SpecializationId
+                              ( @Name		                       
                                ,0
                             )";
 
-                var result = new SpecializationReqModel
+                var result = new SpecializationResModel
                 {
                     Name = dto.Name
                 };
@@ -78,11 +82,11 @@ namespace HCAS.Domain.Features.Specialization
 
                 if (createSpecializations != 1)
                 {
-                    model = Result<SpecializationReqModel>.SystemError("Register Failed");
+                    model = Result<SpecializationResModel>.SystemError("Register Failed");
                     goto Result;
                 }
 
-                model = Result<SpecializationReqModel>.Success(result, "Specializations Registered Successfully");
+                model = Result<SpecializationResModel>.Success(result, "Specializations Registered Successfully");
 
             Result:
                 return model;
@@ -90,46 +94,49 @@ namespace HCAS.Domain.Features.Specialization
             }
             catch (Exception ex)
             {
-                return Result<SpecializationReqModel>.SystemError(ex.Message);
+                return Result<SpecializationResModel>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region UpdateSpecializations
-        public async Task<Result<SpecializationReqModel>> UpdateSpecializations(SpecializationReqModel dto)
+        public async Task<Result<SpecializationReqModel>> UpdateSpecializations(SpecializationReqModel dto, int id)
         {
             try
             {
                 Result<SpecializationReqModel> model = new Result<SpecializationReqModel>();
 
-                var SpecializationsExistsQuery = "SELECT COUNT(1) FROM Specializations WHERE Id = @Id";
+                var checkSpecializationExitsQuery = "SELECT COUNT(1) FROM Specializations WHERE Id = @Id";
 
-                if (SpecializationsExistsQuery is null)
+                var resultExits = await _dapperService.QueryFirstOrDefaultAsync<SpecializationResModel>(checkSpecializationExitsQuery, new { Id = id });            
+
+                if (resultExits == null)
                 {
-                    Result<SpecializationReqModel>.ValidationError("Specializations not found");
+                    model =  Result<SpecializationReqModel>.ValidationError("Specialization not found");
+                    return model;
                 }
 
-                var query = @"UPDATE [dbo].[Specializations]
-                               SET [Name] = @Name                             
-                                  ,[del_flg] = 0
-                             WHERE Id = @Id";
+                var updateQuery = @"UPDATE [dbo].[Specializations]
+                            SET [Name] = @Name                             
+                                ,[del_flg] = 0
+                            WHERE Id = @Id";
 
-                var result = new SpecializationReqModel
-                {
-                    Id = dto.Id,
-                    Name = dto.Name
-                };
+                var parameters = new 
+                { Id = id,
+                  Name = dto.Name
+                };      
 
-                var updateSpecializations = await Task.Run(() => _dapperService.Execute(query, result));
+                var updateSpecializations = await _dapperService.ExecuteAsync(updateQuery, parameters);
 
                 if (updateSpecializations != 1)
                 {
                     model = Result<SpecializationReqModel>.SystemError("Update Failed");
-                    return model;
+                    return model;                    
                 }
 
-                model = Result<SpecializationReqModel>.Success(result, "Specializations Updated Successfully");
-                return model;
+                model = Result<SpecializationReqModel>.Success(dto, "Specialization Updated Successfully");
+                return model;             
+
             }
             catch (Exception ex)
             {

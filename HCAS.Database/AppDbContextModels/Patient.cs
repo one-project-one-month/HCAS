@@ -11,13 +11,13 @@ public partial class Patient
 
     public DateOnly DateOfBirth { get; set; }
 
-    public string? Gender { get; set; }
+    public string Gender { get; set; } = null!;
 
-    public string? Phone { get; set; }
+    public string Phone { get; set; } = null!;
 
-    public string? Email { get; set; }
-    public bool del_flg { get; set; }
+    public string Email { get; set; } = null!;
+
+    public bool DelFlg { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-
 }
