@@ -1,5 +1,7 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Doctors;
+using HCAS.Domain.Features.Patient;
+using HCAS.Domain.Features.Specialization;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +22,8 @@ namespace HCAS.Domain
             //dependency injections
             builder.Services.AddScoped<DapperService>();
             builder.Services.AddScoped<DoctorService>();
-
+            builder.Services.AddScoped<PatientService>();
+            builder.Services.AddScoped<SpecializationSerivce>();
 
         }
     }
