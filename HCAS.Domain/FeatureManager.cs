@@ -1,6 +1,8 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Doctors;
 using HCAS.Domain.Features.DoctorSchedule;
+using HCAS.Domain.Features.Specialization;
+using HCAS.Domain.Features.Staff;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -14,26 +16,18 @@ namespace HCAS.Domain
         public static void AddDomain(this WebApplicationBuilder builder)
         {
             // Configure DbContext with retry-on-failure
-            builder.Services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseSqlServer(
-                    builder.Configuration.GetConnectionString("DbConnection"),
-                    sqlOptions =>
-                    {
-                        sqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,              
-                            maxRetryDelay: TimeSpan.FromSeconds(10),
-                            errorNumbersToAdd: null        
-                        );
-                    });
-            });
+            builder.Services.AddDbContext<AppDbContext>(opt =>
+            { 
+                opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
+
+            }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             // Register services
             builder.Services.AddTransient<DapperService>();
-            builder.Services.AddScoped<DoctorService>();
-            builder.Services.AddScoped<DoctorScheduleService>();
-            builder.Services.AddScoped<Specialization>();
-            builder.Services.AddScoped<Staff>();
+            builder.Services.AddTransient<DoctorService>();
+            builder.Services.AddTransient<DoctorScheduleService>();
+            builder.Services.AddTransient<SpecializationSerivce>();
+            builder.Services.AddTransient<StaffService>();
         }
     }
 
