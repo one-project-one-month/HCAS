@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HCAS.Shared;
-using HCAS.Database.AppDbContextModels;
-
-using System.Security.Cryptography.X509Certificates;
+﻿using HCAS.Shared;
 
 namespace HCAS.Domain.Features.Staff;
 
