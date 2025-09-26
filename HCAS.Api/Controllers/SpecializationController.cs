@@ -1,8 +1,8 @@
 ﻿using HCAS.Domain.Features.Specialization;
-using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using HCAS.Domain.Models.Specialization;
 
 namespace HCAS.Api.Controllers
 {

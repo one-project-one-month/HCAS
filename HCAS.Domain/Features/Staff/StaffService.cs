@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HCAS.Shared;
-using HCAS.Domain.Features.Model.Staff;
 using HCAS.Database.AppDbContextModels;
 
 using System.Security.Cryptography.X509Certificates;
+using HCAS.Domain.Models.Staff;
 
 namespace HCAS.Domain.Features.Staff
 {
@@ -197,6 +197,5 @@ namespace HCAS.Domain.Features.Staff
             }
         }
         #endregion
-
     }
 }

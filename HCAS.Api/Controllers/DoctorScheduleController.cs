@@ -1,5 +1,5 @@
 ﻿using HCAS.Domain.Features.DoctorSchedule;
-using HCAS.Domain.Features.Model.DoctorSchedule;
+using HCAS.Domain.Models.DoctorSchedule;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

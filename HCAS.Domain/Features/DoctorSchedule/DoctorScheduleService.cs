@@ -1,5 +1,4 @@
-﻿using HCAS.Domain.Features.Model.Doctors;
-using HCAS.Domain.Features.Model.DoctorSchedule;
+﻿using HCAS.Domain.Models.DoctorSchedule;
 using HCAS.Shared;
 using System;
 using System.Collections.Generic;

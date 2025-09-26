@@ -4,22 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.Model.Staff
+namespace HCAS.Domain.Models.Staff
 {
-    public class StaffResModel
+    public class StaffReqModel
     {
         public int Id { get; set; }
 
         public string Name { get; set; } = null!;
-        
+
         public string Email { get; set; } = null!;
-        
+
         public string? Phone { get; set; }
-        
+
         public string? Role { get; set; }
-        
+
         public string Username { get; set; } = null!;
 
-        public bool del_flg { get; set; }
+        public string Password { get; set; } = null!;
+
     }
 }

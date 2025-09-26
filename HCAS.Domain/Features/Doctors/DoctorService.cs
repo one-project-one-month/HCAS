@@ -1,5 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Features.Model.Doctors;
+using HCAS.Domain.Models.Doctors;
 using HCAS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;

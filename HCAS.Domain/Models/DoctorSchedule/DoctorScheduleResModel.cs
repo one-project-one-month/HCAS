@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.Model.DoctorSchedule
+namespace HCAS.Domain.Models.DoctorSchedule
 {
-    public class DoctorScheduleReqModel
+    public class DoctorScheduleResModel
     {
+        public int Id { get; set; }
 
         public int DoctorId { get; set; }
 
@@ -15,5 +16,6 @@ namespace HCAS.Domain.Features.Model.DoctorSchedule
 
         public int MaxPatients { get; set; }
 
+        public bool del_flg { get; set; }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Features.Model.Doctors;
+using HCAS.Domain.Models.Doctors;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

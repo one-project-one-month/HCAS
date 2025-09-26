@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.Model.Doctors
+namespace HCAS.Domain.Models.Doctors
 {
     public class DoctorsResModel
     {

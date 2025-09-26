@@ -1,6 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Features.Model.Doctors;
-using HCAS.Domain.Features.Model.Specialization;
+using HCAS.Domain.Models.Specialization;
 using HCAS.Shared;
 using System;
 using System.Collections.Generic;
