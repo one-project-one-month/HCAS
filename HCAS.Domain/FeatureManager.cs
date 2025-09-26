@@ -1,4 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
+using HCAS.Domain.Features.Appoinment;
 using HCAS.Domain.Features.Doctors;
 using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Domain.Features.Specialization;
@@ -28,6 +29,7 @@ namespace HCAS.Domain
             builder.Services.AddTransient<DoctorScheduleService>();
             builder.Services.AddTransient<SpecializationSerivce>();
             builder.Services.AddTransient<StaffService>();
+            builder.Services.AddTransient<AppoimentService>();
         }
     }
 
