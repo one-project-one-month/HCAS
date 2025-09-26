@@ -1,0 +1,117 @@
+﻿@using HCAS.Domain.Features.DoctorSchedules
+@using HCAS.Domain.Features.Model.DoctorSchedules
+@inject DoctorScheduleService doctorScheduleService
+
+<MudDialog Style="height: 500px; width: 450px;">
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-4">@(_isEdit ? "Edit Schedule" : "Add Schedule")</MudText>
+
+            <MudForm @ref="form" @bind-IsValid="@_isFormValid">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudSelect T="int?" Label="Doctor Name" @bind-Value="scheduleModel.DoctorId" 
+                                   Required="true" RequiredError="Please select a doctor">
+                            <MudSelectItem Value="@((int?)null)" Disabled="true">Select Doctor</MudSelectItem>
+                            @foreach (DoctorModel doctor in Doctors)
+                            {
+                                <MudSelectItem Value="@((int?)doctor.Id)">@doctor.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudDatePicker Label="Schedule Date" @bind-Date="scheduleModel.ScheduleDate" 
+                                       Required="true" RequiredError="Please select a schedule date"
+                                       MinDate="DateTime.Today" 
+                                       Placeholder="Select schedule date" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudNumericField T="int?" Label="Maximum Patients" @bind-Value="scheduleModel.MaxPatients" 
+                                         Required="true" RequiredError="Please enter maximum patients"
+                                         Min="1" Max="100" 
+                                         Placeholder="Enter maximum number of patients" />
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="SaveSchedule" Disabled="@(!_isFormValid || _loading)">
+            @if (_loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">Saving...</MudText>
+            }
+            else
+            {
+                <MudText>Save</MudText>
+            }
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="_loading">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog {get;set;} = default!;
+
+    [Parameter] public DoctorScheduleResModel? Schedule {get;set;}
+
+    private DoctorScheduleReqModel scheduleModel = new DoctorScheduleReqModel();
+
+    private List<DoctorModel> Doctors = new List<DoctorModel>();
+
+    private bool _loading = false;
+
+    private bool _isEdit => Schedule is not null;
+    
+    private bool _isFormValid = false;
+    private MudForm form = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+
+        if(_isEdit && Schedule is not null){
+            scheduleModel = new DoctorScheduleReqModel(){
+                DoctorId = Schedule.DoctorId,
+                ScheduleDate = Schedule.ScheduleDate,
+                MaxPatients = Schedule.MaxPatients
+            };
+        }
+
+        IEnumerable<DoctorModel>? result = await doctorScheduleService.GetDoctorsAsync();
+        Doctors = result?.ToList() ?? new List<DoctorModel>();
+
+        _loading = false;
+    }
+
+    private async Task SaveSchedule(){
+        _loading = true;
+
+        Result<DoctorScheduleResModel> result;
+        if(_isEdit && Schedule is not null){
+            result = await doctorScheduleService.UpdateScheduleAsync(Schedule.Id, scheduleModel);
+        }
+        else{
+            result = await doctorScheduleService.CreateScheduleAsync(scheduleModel);
+        }
+
+        _loading = false;
+
+        if(result.IsSuccess){
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel(){
+        MudDialog.Cancel();
+    }
+
+}
