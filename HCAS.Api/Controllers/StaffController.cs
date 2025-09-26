@@ -2,7 +2,6 @@
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using HCAS.Domain.Models.Staff;
 
 namespace HCAS.Api.Controllers
 {

@@ -11,58 +11,18 @@ namespace HCAS.Shared
 {
     public class BaseController : ControllerBase
     {
-        private readonly CustomSettingModel _setting;
-
-        public BaseController(IOptionsMonitor<CustomSettingModel> setting)
+        protected IActionResult Excute<T>(Result<T> result)
         {
-            _setting = setting.CurrentValue;
-        }
+            var responseType = result.GetEnumRespType();
 
-        //protected IActionResult Excute<T>(Result<T> obj)
-        //{
-        //    var responseType = obj.GetEnumRespType();
-        //    dynamic result = _setting.EnableEncryption
-        //        ? EncryptResponse(obj)
-        //        : obj;
-
-        //    return responseType switch
-        //    {
-        //        EnumRespType.Success => Ok(result),
-        //        EnumRespType.Error => BadRequest(result),
-        //        EnumRespType.SystemError => BadRequest(result),
-        //        EnumRespType.DuplicateRecord => BadRequest(result),
-        //        EnumRespType.BadRequest => BadRequest(result),
-        //        EnumRespType.None => throw new Exception("EnumRespType is none. pls check your logic."),
-        //        _ => throw new Exception("Out of scope in Execute (BaseController). pls check your logic.")
-        //    };
-        //}
-
-        private EncryptedResponseDto EncryptResponse<T>(Result<T> obj)
-        {
-            var json = JsonConvert.SerializeObject(obj);
-            var encrypted = EncryptionHelper.Encrypt(json);
-            return new EncryptedResponseDto { Data = encrypted };
-        }
-
-        public class EncryptedResponseDto
-        {
-            public string Data
+            return responseType switch
             {
-                get; set;
-            }
-        }
-
-        protected T GetData<T>()
-        {
-            if (HttpContext.Items["DecryptedBody"] is null)
-            {
-                throw new Exception("DecryptedBody is null. pls check your logic.");
-            }
-
-            var obj = HttpContext.Items["DecryptedBody"]!.ToString()!.ToObject<T>();
-            if (obj is null)
-                throw new Exception("DecryptedBody to object is null. pls check your logic.");
-            return obj;
+                EnumRespType.Success => Ok(result),
+                EnumRespType.SystemError => StatusCode(500, result),
+                EnumRespType.NotFound => BadRequest(result),
+                EnumRespType.None => throw new Exception("EnumRespType is none. pls check your logic."),
+                _ => throw new Exception("Out of scope in Execute (BaseController). pls check your logic.")
+            };
         }
     }
 }
