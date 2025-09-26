@@ -16,7 +16,7 @@ namespace HCAS.Shared
 
         public DapperService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DbConnection");
+            _connectionString = configuration.GetConnectionString("DbConnection")!;
         }
 
         public List<T> Query<T>(string query, object? param = null)
@@ -25,7 +25,7 @@ namespace HCAS.Shared
             using IDbConnection db = new SqlConnection(_connectionString);
             var lst = db.Query<T>(query, param).ToList();
             return lst;
-        }
+        }              
 
         public T QueryFirstOrDefault<T>(string query, object? param = null)
         {
@@ -41,9 +41,22 @@ namespace HCAS.Shared
             return result;
         }
 
-        public void ExecuteScalar<T>(string doctorExistsQuery, object value)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string query, object? param = null)
+        {         
+            using IDbConnection db = new SqlConnection(_connectionString);
+            return await db.QueryAsync<T>(query, param);
+        }
+
+        public async Task<T> QueryFirstOrDefaultAsync<T>(string query, object? param = null)
         {
-            throw new NotImplementedException();
+            using IDbConnection db = new SqlConnection(_connectionString);
+            return await db.QueryFirstOrDefaultAsync<T>(query, param);
+        }
+
+        public async Task<int> ExecuteAsync(string query, object? param = null)
+        {
+            using IDbConnection db = new SqlConnection(_connectionString);
+            return await db.ExecuteAsync(query, param);        
         }
     }
 }

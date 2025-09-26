@@ -1,5 +1,5 @@
-﻿using HCAS.Domain.Features.DoctorSchedule;
-using HCAS.Domain.Features.Model.DoctorSchedule;
+﻿using HCAS.Domain.Features.DoctorSchedules;
+using HCAS.Domain.Features.Model.DoctorSchedules;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,32 +16,63 @@ namespace HCAS.Api.Controllers
             _doctorScheduleService = doctorScheduleService;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateDoctorSchedule(DoctorScheduleReqModel dto)
+        //POST: api/v1/DoctorSchedule
+        [HttpPost]
+        public async Task<IActionResult> CreateDoctorSchedule([FromBody] DoctorScheduleReqModel dto)
         {
-            var result = await _doctorScheduleService.CreateSchedule(dto);
-            return Ok(result);
+            var result = await _doctorScheduleService.CreateScheduleAsync(dto);
+
+            if (result.IsValidationError)
+                return BadRequest(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+            return Ok(result.Data);
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateDoctorSchedule(int id, DoctorScheduleReqModel dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDoctorSchedule(int id, [FromBody] DoctorScheduleReqModel dto)
         {
-            var result = await _doctorScheduleService.UpdateSchedule(id, dto);
-            return Ok(result);
+            var result = await _doctorScheduleService.UpdateScheduleAsync(id, dto);
+            if (result.IsValidationError)
+                return BadRequest(result.Message);
+
+            if (result.IsNotFound)
+                return NotFound(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+            return Ok(result.Data);
         }
 
-        [HttpGet("get")]
-        public async Task<IActionResult> GetAllSchedules()
+
+        //GET: api/v1/DoctorSchedule
+
+        [HttpGet]
+        public async Task<IActionResult> GetSchedules(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null
+        )
         {
-            var result = await _doctorScheduleService.GetAllSchedules();
-            return Ok(result);
+            var result = await _doctorScheduleService.GetSchedulesAsyn(page,pageSize,search);
+            if (result.IsNotFound)
+                return NotFound(result.Message);
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+            return Ok(result.Data);
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSchedules(int id)
         {
-            var result = await _doctorScheduleService.DeleteSchedule(id);
-            return Ok(result);
+            var result = await _doctorScheduleService.DeleteScheduleAsync(id);
+            if (result.IsNotFound)
+                return NotFound(result.Message);
+
+            if (result.IsSystemError)
+                return StatusCode(500, result.Message);
+            return Ok(result.Message);
         }
 
         [HttpGet("getAvailable")]
