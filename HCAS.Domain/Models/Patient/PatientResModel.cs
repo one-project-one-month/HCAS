@@ -8,6 +8,7 @@ namespace HCAS.Domain.Models.Patient
 {
     public class PatientResModel
     {
+        public int Id { get; set; }
 
         public string Name { get; set; }
 
@@ -18,6 +19,5 @@ namespace HCAS.Domain.Models.Patient
         public string Phone {  get; set; }
 
         public string Email { get; set; }
-      
     }
 }

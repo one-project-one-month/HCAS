@@ -6,239 +6,168 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.DoctorSchedule
+namespace HCAS.Domain.Features.DoctorSchedule;
+
+public static class DoctorScheduleQuery
 {
-    public class DoctorScheduleService
+    public const string Insert = @"
+        INSERT INTO DoctorSchedules (DoctorId, ScheduleDate, MaxPatients, del_flg)
+        VALUES (@DoctorId, @ScheduleDate, @MaxPatients, 0)";
+
+    public const string ExistsById = @"
+        SELECT COUNT(1) FROM DoctorSchedules WHERE Id = @Id";
+
+    public const string Update = @"
+        UPDATE DoctorSchedules
+        SET DoctorId = @DoctorId, ScheduleDate = @ScheduleDate, MaxPatients = @MaxPatients, del_flg = 0
+        WHERE Id = @Id";
+
+    public const string GetAll = @"
+        SELECT ds.Id, ds.DoctorId, d.Name AS DoctorName, ds.ScheduleDate, ds.MaxPatients
+        FROM DoctorSchedules ds
+        INNER JOIN Doctors d ON ds.DoctorId = d.Id";
+
+    public const string SoftDelete = @"
+        UPDATE DoctorSchedules SET del_flg = 1 WHERE Id = @Id";
+
+    public const string GetAvailable = @"
+        SELECT 
+            ds.Id, 
+            d.Name AS DoctorName, 
+            s.Name AS Specializations,
+            ds.ScheduleDate, 
+            ds.MaxPatients, 
+            COUNT(a.Id) AS AppointmentCount
+        FROM DoctorSchedules ds
+        INNER JOIN Doctors d ON ds.DoctorId = d.Id
+        INNER JOIN Specializations s ON s.Id = d.SpecializationId
+        LEFT JOIN Appointments a ON ds.Id = a.ScheduleId
+        WHERE ds.ScheduleDate > GETDATE()
+        GROUP BY ds.Id, d.Name, ds.ScheduleDate, ds.MaxPatients, s.Name
+        ORDER BY ds.ScheduleDate";
+}
+public class DoctorScheduleService
+{
+    private readonly DapperService _dapper;
+
+    public DoctorScheduleService(DapperService dapperService)
     {
-        private readonly DapperService _dapperService;
+        _dapper = dapperService;
+    }
 
-        public DoctorScheduleService(DapperService dapperService)
+    public async Task<Result<DoctorScheduleResModel>> CreateSchedule(DoctorScheduleReqModel dto)
+    {
+        try
         {
-            _dapperService = dapperService;
-        }
+            if (dto.DoctorId <= 0)
+                return Result<DoctorScheduleResModel>.ValidationError("Invalid DoctorId");
 
-        #region CreateSchedule
-        public async Task<Result<DoctorScheduleResModel>> CreateSchedule(DoctorScheduleReqModel dto)
+            if (dto.ScheduleDate < DateTime.Now)
+                return Result<DoctorScheduleResModel>.ValidationError("Schedule date cannot be in the past");
+
+            var res = await _dapper.ExecuteAsync(DoctorScheduleQuery.Insert, dto);
+
+            if (res != 1)
+                return Result<DoctorScheduleResModel>.SystemError("Failed to create schedule");
+
+            var result = new DoctorScheduleResModel
+            {
+                DoctorId = dto.DoctorId,
+                ScheduleDate = dto.ScheduleDate,
+                MaxPatients = dto.MaxPatients
+            };
+
+            return Result<DoctorScheduleResModel>.Success(result, "Schedule created successfully");
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                Result<DoctorScheduleResModel> model = new Result<DoctorScheduleResModel>();
-
-                if (dto.DoctorId < 0)
-                {
-                    model = Result<DoctorScheduleResModel>.ValidationError("Invalid DoctorId");
-                    goto Result;
-                }
-
-                if (dto.ScheduleDate < DateTime.Now)
-                {
-                    model = Result<DoctorScheduleResModel>.ValidationError("Schdedule date cannot be in past");
-                    goto Result;
-                }
-
-                var query = $@"INSERT INTO [dbo].[DoctorSchedules]
-                                ([DoctorId]
-                                ,[ScheduleDate]
-                                ,[MaxPatients]
-                                ,[del_flg])
-                            VALUES
-                                ( @DoctorId 
-                                ,@ScheduleDate
-                                ,@MaxPatients
-                                ,0
-                                )";
-
-                var result = new DoctorScheduleResModel
-                {
-                    DoctorId = dto.DoctorId,
-                    ScheduleDate = dto.ScheduleDate,
-                    MaxPatients = dto.MaxPatients
-                };
-
-                var createDoctorSchedule = _dapperService.Execute(query, result);
-
-                if (createDoctorSchedule != 1)
-                {
-                    model = Result<DoctorScheduleResModel>.SystemError("Register Failed");
-                    goto Result;
-                }
-
-
-                model = Result<DoctorScheduleResModel>.Success(result, "Register Successfully");
-
-
-            Result:
-                return model;
-
-            }
-            catch (Exception ex)
-            {
-                return Result<DoctorScheduleResModel>.SystemError(ex.Message);
-            }
+            return Result<DoctorScheduleResModel>.SystemError($"Error creating schedule: {ex.Message}");
         }
-        #endregion
+    }
 
-        #region UpdateSchedule
-        public async Task<Result<DoctorScheduleResModel>> UpdateSchedule(int id, DoctorScheduleReqModel dto)
+    public async Task<Result<DoctorScheduleResModel>> UpdateSchedule(int id, DoctorScheduleReqModel dto)
+    {
+        try
         {
-            try
+            var exists = await _dapper.QueryFirstOrDefaultAsync<int>(DoctorScheduleQuery.ExistsById, new { Id = id });
+
+            if (exists == 0)
+                return Result<DoctorScheduleResModel>.ValidationError("Schedule does not exist");
+
+            var parameters = new
             {
-                Result<DoctorScheduleResModel> model = new Result<DoctorScheduleResModel>();
+                Id = id,
+                dto.DoctorId,
+                dto.ScheduleDate,
+                dto.MaxPatients
+            };
 
-                var scheduleExistQuery = @"SELECT COUNT(1) FROM DoctorSchedules WHERE Id = @Id";
+            var res = await _dapper.ExecuteAsync(DoctorScheduleQuery.Update, parameters);
 
-                var scheduleExist = _dapperService.QueryFirstOrDefault<int?>(scheduleExistQuery, new { Id = id });
+            if (res != 1)
+                return Result<DoctorScheduleResModel>.SystemError("Failed to update schedule");
 
-                if (scheduleExist == null)
-                {
-                    model = Result<DoctorScheduleResModel>.SystemError("Schedule is not exist");
-                    goto Result;
-                }
-
-                var query = $@"UPDATE [dbo].[DoctorSchedules] SET [DoctorId] = @DoctorId, [ScheduleDate] = @ScheduleDate, [MaxPatients] = @MaxPatients, [del_flg] = 0 WHERE Id = @Id";
-
-                var parameters = new
-                {
-                    Id = id,
-                    DoctorId = dto.DoctorId,
-                    ScheduleDate = dto.ScheduleDate,
-                    MaxPatients = dto.MaxPatients,
-                };
-
-                var updateDoctorSchedule = _dapperService.Execute(query, parameters);
-
-                if (updateDoctorSchedule != 1)
-                {
-                    model = Result<DoctorScheduleResModel>.SystemError("Fail to update schedule");
-                    goto Result;
-                }
-
-                var result = new DoctorScheduleResModel
-                {
-                    DoctorId = dto.DoctorId,
-                    ScheduleDate = dto.ScheduleDate,
-                    MaxPatients = dto.MaxPatients,
-                };
-
-                model = Result<DoctorScheduleResModel>.Success(result, "Update Schedule Successfully");
-                goto Result;
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
+            var result = new DoctorScheduleResModel
             {
-                return Result<DoctorScheduleResModel>.SystemError(ex.Message);
-            }
+                DoctorId = dto.DoctorId,
+                ScheduleDate = dto.ScheduleDate,
+                MaxPatients = dto.MaxPatients
+            };
+
+            return Result<DoctorScheduleResModel>.Success(result, "Schedule updated successfully");
         }
-        #endregion
-
-        #region GetSchedules
-        public async Task<Result<IEnumerable<DoctorScheduleResModel>>> GetAllSchedules()
+        catch (Exception ex)
         {
-            try
-            {
-                Result<IEnumerable<DoctorScheduleResModel>> model = new Result<IEnumerable<DoctorScheduleResModel>>();
-
-                var query = @"SELECT 
-                            ds.Id, 
-                            ds.DoctorId,
-                            d.Name AS DoctorName, 
-                            ds.ScheduleDate, 
-                            ds.MaxPatients 
-                        FROM DoctorSchedules ds
-                        INNER JOIN Doctors d ON ds.DoctorId = d.Id";
-
-                var result = _dapperService.Query<DoctorScheduleResModel>(query);
-
-                string message = (result.Count == 0) ? "No Schedule Found" : "Success";
-
-                model = Result<IEnumerable<DoctorScheduleResModel>>.Success(result, message);
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<IEnumerable<DoctorScheduleResModel>>.SystemError(ex.Message);
-            }
+            return Result<DoctorScheduleResModel>.SystemError($"Error updating schedule: {ex.Message}");
         }
+    }
 
-        #endregion
-
-        #region DeleteSchedule
-        public async Task<Result<DoctorScheduleResModel>> DeleteSchedule(int id)
+    public async Task<Result<IEnumerable<DoctorScheduleResModel>>> GetAllSchedules()
+    {
+        try
         {
-            try
-            {
-                Result<DoctorScheduleResModel> model = new Result<DoctorScheduleResModel>();
+            var result = await _dapper.QueryAsync<DoctorScheduleResModel>(DoctorScheduleQuery.GetAll);
 
-                var query = $@"UPDATE [dbo].[DoctorSchedules] SET del_flg = 1 WHERE Id = @Id";
+            var message = result.Any() ? "Success" : "No schedules found";
 
-                var parameters = new { Id = id };
-
-                var deletedRow = _dapperService.Execute(query, parameters);
-
-                if (deletedRow != 1)
-                {
-                    model = Result<DoctorScheduleResModel>.ValidationError("Cannot delete schedule");
-                    goto Result;
-                }
-
-                model = Result<DoctorScheduleResModel>.Success(new DoctorScheduleResModel { Id = id }, "Success");
-
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<DoctorScheduleResModel>.SystemError(ex.Message);
-            }
-
+            return Result<IEnumerable<DoctorScheduleResModel>>.Success(result, message);
         }
-        #endregion
-
-        #region GetAvailableSchedules
-        public async Task<Result<IEnumerable<DoctorScheduleResModel>>> GetAvailableSchedules()
+        catch (Exception ex)
         {
-            try
-            {
-                Result<IEnumerable<DoctorScheduleResModel>> model = new Result<IEnumerable<DoctorScheduleResModel>>();
-
-                var query = @"SELECT 
-                     ds.Id, 
-                     d.Name AS DoctorName, 
-					 s.Name As Specializations,
-                     ds.ScheduleDate, 
-                     ds.MaxPatients, 
-                     COUNT(a.Id) AS AppointmentCount
-                 FROM DoctorSchedules ds
-                 INNER JOIN Doctors d ON ds.DoctorId = d.Id
-				 inner join Specializations S on s.Id = d.SpecializationId
-                 LEFT JOIN Appointments a ON ds.Id = a.ScheduleId
-                 WHERE ds.ScheduleDate > GETDATE() 
-                 --and Status <> 'Cancelled'
-                 GROUP BY ds.Id, d.Name, ds.ScheduleDate, ds.MaxPatients,s.Name
-                 ORDER BY ds.ScheduleDate;";
-
-                var result = _dapperService.Query<DoctorScheduleResModel>(query);
-
-                string message = (result.Count == 0) ? "No available schedule found" : "Success";
-
-                model = Result<IEnumerable<DoctorScheduleResModel>>.Success(result, message);
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<IEnumerable<DoctorScheduleResModel>>.SystemError(ex.Message);
-            }
-
-
-
+            return Result<IEnumerable<DoctorScheduleResModel>>.SystemError($"Error retrieving schedules: {ex.Message}");
         }
-        #endregion
+    }
+
+    public async Task<Result<DoctorScheduleResModel>> DeleteSchedule(int id)
+    {
+        try
+        {
+            var res = await _dapper.ExecuteAsync(DoctorScheduleQuery.SoftDelete, new { Id = id });
+
+            if (res != 1)
+                return Result<DoctorScheduleResModel>.ValidationError("Failed to delete schedule");
+
+            return Result<DoctorScheduleResModel>.Success(new DoctorScheduleResModel { Id = id }, "Schedule deleted successfully");
+        }
+        catch (Exception ex)
+        {
+            return Result<DoctorScheduleResModel>.SystemError($"Error deleting schedule: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<IEnumerable<DoctorScheduleResModel>>> GetAvailableSchedules()
+    {
+        try
+        {
+            var result = await _dapper.QueryAsync<DoctorScheduleResModel>(DoctorScheduleQuery.GetAvailable);
+
+            var message = result.Any() ? "Success" : "No available schedules found";
+
+            return Result<IEnumerable<DoctorScheduleResModel>>.Success(result, message);
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<DoctorScheduleResModel>>.SystemError($"Error retrieving available schedules: {ex.Message}");
+        }
     }
 }

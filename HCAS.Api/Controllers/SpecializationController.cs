@@ -10,9 +10,9 @@ namespace HCAS.Api.Controllers
     [ApiController]
     public class SpecializationController : ControllerBase
     {
-        private readonly SpecializationSerivce _specializationSerivce;
+        private readonly SpecializationService _specializationSerivce;
 
-        public SpecializationController(SpecializationSerivce specializationSerivce)
+        public SpecializationController(SpecializationService specializationSerivce)
         {
             _specializationSerivce = specializationSerivce;        
         }
