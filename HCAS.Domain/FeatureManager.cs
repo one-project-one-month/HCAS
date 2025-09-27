@@ -28,9 +28,9 @@ namespace HCAS.Domain
             builder.Services.AddTransient<DapperService>();
             builder.Services.AddTransient<DoctorService>();
             builder.Services.AddTransient<DoctorScheduleService>();
-            builder.Services.AddTransient<SpecializationSerivce>();
+            builder.Services.AddTransient<SpecializationService>();
             builder.Services.AddTransient<StaffService>();
-            builder.Services.AddTransient<AppoimentService>();
+            builder.Services.AddTransient<AppoinmentService>();
             builder.Services.AddTransient<PatientService>();
         }
     }

@@ -9,9 +9,9 @@ namespace HCAS.Api.Controllers
     [ApiController]
     public class AppoinmentController : ControllerBase
     {
-        private readonly AppoimentService _appointment;
+        private readonly AppoinmentService _appointment;
 
-        public AppoinmentController(AppoimentService appointment)
+        public AppoinmentController(AppoinmentService appointment)
         {
             _appointment = appointment;
         }
@@ -19,7 +19,7 @@ namespace HCAS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAppoinmentList()
         {
-            var appoinment = await _appointment.GetAllAppoinment();
+            var appoinment = await _appointment.GetAllAppointments();
             return Ok(appoinment);
         }
 
@@ -40,7 +40,7 @@ namespace HCAS.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateAppoinmentStatus(int appointmentId, string newStatus)
         {
-            var appoinment = await _appointment.UpdateAppoinment(appointmentId, newStatus);
+            var appoinment = await _appointment.UpdateAppointment(appointmentId, newStatus);
             return Ok(appoinment);
         }
     }
