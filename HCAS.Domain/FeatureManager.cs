@@ -31,6 +31,7 @@ namespace HCAS.Domain
             builder.Services.AddTransient<SpecializationSerivce>();
             builder.Services.AddTransient<StaffService>();
             builder.Services.AddTransient<AppoimentService>();
+            builder.Services.AddTransient<PatientService>();
         }
     }
 

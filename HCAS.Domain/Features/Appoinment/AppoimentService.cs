@@ -132,13 +132,13 @@ namespace HCAS.Domain.Features.Appoinment
 
                 var result = new AppoinmentResModel
                 {
-                    //Id = newAppointmentId,
+                    Id = newAppointmentId,
                     DoctorId = schedule.DoctorId,
                     PatientId = patientId,
                     ScheduleId = scheduleId,
                     AppointmentDate = schedule.ScheduleDate,
                     AppointmentNumber = appointmentNumber,
-                    Status = "Pending"
+                    Status = "pending"
                 };
 
                 return Result<AppoinmentResModel>.Success(result, "Appointment created successfully.");

@@ -23,12 +23,12 @@ namespace HCAS.Api.Controllers
             return Ok(appoinment);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAppoinmentById(int id)
-        {
-            var appoinment = await _appointment.GetAppoinmentById(id);
-            return Ok(appoinment);
-        }
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetAppoinmentById(int id)
+        //{
+        //    var appoinment = await _appointment.GetAppoinmentById(id);
+        //    return Ok(appoinment);
+        //}
 
         [HttpPost]
         public async Task<IActionResult> CreateAppoinment(int patientId, int scheduleId) 

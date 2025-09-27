@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HCAS.Database.AppDbContextModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ namespace HCAS.Domain.Features.Model.Appoinment
 {
     public class AppoinmentResModel
     {
+        public int Id { get; set; }
+
         public int ScheduleId { get; set; }
 
         public int DoctorId { get; set; }
@@ -21,5 +24,9 @@ namespace HCAS.Domain.Features.Model.Appoinment
         public string Status { get; set; } = null!;
 
         public bool DelFlg { get; set; }
+
+       // public virtual Doctor Doctor { get; set; } = null!;
+
+       
     }
 }
