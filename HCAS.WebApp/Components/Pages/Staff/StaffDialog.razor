@@ -1,0 +1,112 @@
+﻿@using HCAS.Domain.Features.Staff
+@using HCAS.Domain.Features.Model.Staff
+@using MudBlazor
+@using Variant = MudBlazor.Variant
+
+@inject StaffService StaffService
+@inject ISnackbar Snackbar
+
+<MudDialog Style="height: 400px; width: 400px;">
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Staff" : "Add Staff")</MudText>
+            <MudTextField @bind-Value="staffModel.Name" Label="Name" Required="true" RequiredError="Name is required!" />
+            <MudTextField @bind-Value="staffModel.Email" Label="Email" Required="true" RequiredError="Email is required!" />
+            <MudTextField @bind-Value="staffModel.Phone" Label="Phone" RequiredError="Phone Number is required!" />
+            <MudSelect T="string" @bind-Value="staffModel.Role" Label="Role" Required="true" RequiredError="Role is required!">
+                <MudSelectItem Value="@("Doctor")">Doctor</MudSelectItem>
+                <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                <MudSelectItem Value="@("Receptionist")">Receptionist</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="staffModel.Username" Label="Username" Required="true" RequiredError="User name is required!" />
+            
+            <Component />
+
+            <MudTextField @bind-Value="staffModel.Password" Label="Password" InputType="InputType.Password"
+                          Required="@(!_isEdit)" HelperText="@(_isEdit ? "Leave blank to keep existing password" : "Choose a strong password")" 
+                          RequiredError="Password is required!" />
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="SaveStaff">Save</MudButton>
+
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public StaffResModel? Staff { get; set; }
+
+    private StaffReqModel staffModel = new();
+    private bool _loading = false;
+    private bool _isEdit => Staff is not null;
+
+    protected override void OnInitialized()
+    {
+        _loading = true;
+
+        if (_isEdit && Staff is not null)
+        {
+            staffModel = new StaffReqModel
+            {
+                Id = Staff.Id,
+                Name = Staff.Name,
+                Email = Staff.Email,
+                Phone = Staff.Phone,
+                Role = Staff.Role,
+                Username = Staff.Username
+            };
+        }
+
+        _loading = false;
+    }
+
+    private async Task SaveStaff()
+    {
+        if (string.IsNullOrWhiteSpace(staffModel.Name) || string.IsNullOrWhiteSpace(staffModel.Username) || string.IsNullOrWhiteSpace(staffModel.Role))
+        {
+            Snackbar.Add("Fill Required Fields", Severity.Error);
+            return; 
+        }
+        
+        // _loading = true;
+        Result<StaffReqModel> result;
+
+        if (!_isEdit && string.IsNullOrWhiteSpace(staffModel.Password))
+        {
+            Snackbar.Add("Password is required when adding a new staff member", Severity.Error);
+            return;
+        }
+        
+        _loading = true;
+
+        if (_isEdit && Staff != null)
+        {
+            result = await StaffService.UpdateStaffAsync(staffModel);
+        }
+        else
+        {
+            result = await StaffService.RegisterStaffAsync(staffModel);
+        }
+
+        _loading = false;
+
+        if (result.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
