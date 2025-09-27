@@ -5,246 +5,154 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
-using HCAS.Domain.Features.Model.Patient;
+using HCAS.Domain.Models.Patient;
 using HCAS.Shared;
 
-namespace HCAS.Domain.Features.Patient
+namespace HCAS.Domain.Features.Patient;
+
+public static class PatientQuery
 {
-    public class PatientService
+    public const string GetAll = "SELECT * FROM Patients WHERE del_flg = 0";
+
+    public const string GetById = "SELECT * FROM Patients WHERE Id = @Id AND del_flg = 0";
+
+    public const string Insert = @"
+        INSERT INTO Patients (Name, DateOfBirth, Gender, Phone, Email, del_flg)
+        VALUES (@Name, @DateOfBirth, @Gender, @Phone, @Email, 0)";
+
+    public const string Update = @"
+        UPDATE Patients
+        SET Name = @Name,
+            DateOfBirth = @DateOfBirth,
+            Gender = @Gender,
+            Phone = @Phone,
+            Email = @Email
+        WHERE Id = @Id";
+
+    public const string SoftDelete = "UPDATE Patients SET del_flg = 1 WHERE Id = @Id";
+}
+
+public class PatientService
+{
+    private readonly DapperService _dapper;
+
+    public PatientService(DapperService dapperService)
     {
-        private readonly DapperService _dapperService;
+        _dapper = dapperService;
+    }
 
-        public PatientService(DapperService dapperService)
+    public async Task<Result<List<PatientResModel>>> GetAllPatient()
+    {
+        try
         {
-            _dapperService = dapperService;
+            var result = await _dapper.QueryAsync<PatientResModel>(PatientQuery.GetAll);
+            var data = result.ToList();
+
+            var message = data.Count == 0 ? "No data found" : "Success";
+            return Result<List<PatientResModel>>.Success(data, message);
         }
-
-        #region GetAllPatient
-        public async Task<Result<List<PatientResModel>>> GetAllPatient()
+        catch (Exception ex)
         {
-            try
-            {
-                Result<List<PatientResModel>> model = new Result<List<PatientResModel>>();
-                string query = "SELECT * FROM Patients where del_flg = 0";
-
-                var patientList = await Task.Run(() => _dapperService.Query<PatientResModel>(query));
-
-                if( patientList.Count < 0 )
-                {
-                    model = Result<List<PatientResModel>>.SystemError("Something went wrong");
-                    goto Result;
-                }
-
-                string message = (patientList.Count == 0) ? "No Data Found" : "Success";
-                model = Result<List<PatientResModel>>.Success(patientList, message);
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<List<PatientResModel>>.SystemError(ex.Message);    
-            }
-        }
-        #endregion
-       
-        #region GetById
-        public async Task<Result<PatientResModel>> GetById(int id)
-        {
-            try
-            {
-                Result <PatientResModel> model = new Result<PatientResModel>();
-
-                string query = @"";
-
-                var patient = await Task.Run(() => _dapperService.Query<PatientResModel>(query, new
-                {
-                    @Id = id,
-                }));
-
-                if(patient.Count < 0 )
-                {
-                    model = Result<PatientResModel>.SystemError("Something went wrong");
-                    goto Result;
-                }
-
-                string message = (patient.Count == 0) ? "No Data Found" : "Success";
-                model = Result<PatientResModel>.Success(patient[0], message);
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<PatientResModel>.SystemError (ex.Message);
-            }
-        }
-        #endregion
-      
-        #region UpdatePatient
-        public async Task<Result<PatientResModel>> UpdatePatient(PatientReqModel patientReqModel,int id)
-        {
-            try
-            {
-                Result<PatientResModel> model = new Result<PatientResModel> ();
-
-                
-
-                string query = "SELECT * FROM Patients WHERE Id = @Id AND del_flg = 0";
-
-                var patient = await Task.Run(() => _dapperService.Query<PatientResModel>(query, new
-                {
-                    @Id = id ,
-                }));
-
-                if (patient.Count < 0 )
-                {
-                    model = Result<PatientResModel>.SystemError("Something went wrong");
-                    goto Result;
-                }
-
-                string UpdateQuery = @"
-UPDATE [dbo].[Patients]
-   SET [Name] = @Name
-      ,[DateOfBirth] = @DateOfBirth
-      ,[Gender] = @Gender
-      ,[Phone] = @Phone
-      ,[Email] = @Email
- WHERE Id = @Id";
-
-                int result = await Task.Run(() => _dapperService.Execute(UpdateQuery, new
-                {
-                    Id = id,
-                    Name = patientReqModel.Name,
-                    DateOfBirth = patientReqModel.DateOfBirth,
-                    Gender = patientReqModel.Gender,
-                    Phone = patientReqModel.Phone,
-                    Email = patientReqModel.Email
-                }));
-                if (result < 0)
-                {
-                    model = Result<PatientResModel>.SystemError("Something went wrong");
-                    goto Result;
-                }
-
-                var res = new PatientResModel();
-
-                res.Name = patientReqModel.Name;
-                res.DateOfBirth = patientReqModel.DateOfBirth;
-                res.Gender = patientReqModel.Gender;
-                res.Phone = patientReqModel.Phone;
-                res.Email = patientReqModel.Email;
-
-                model = Result<PatientResModel>.Success(res,"Update Success");
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<PatientResModel>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-     
-        #region CreatePatient
-        public async Task<Result<PatientReqModel>> RegisterPatient(PatientReqModel reqModel)
-        {
-            try
-            {
-                Result <PatientReqModel> model = new Result<PatientReqModel>();
-                if (string.IsNullOrEmpty(reqModel.Name))
-                {
-                    model = Result<PatientReqModel>.ValidationError("Name is required");
-                    goto Result;
-                }
-
-                string query = @"INSERT INTO [dbo].[Patients]
-           ([Name]
-           ,[DateOfBirth]
-           ,[Gender]
-           ,[Phone]
-           ,[Email]
-           ,[del_flg])
-     VALUES
-           ( @Name
-           ,@DateOfBirth
-           ,@Gender
-           ,@Phone
-           ,@Email
-           ,0)";
-
-                var result = await Task.Run(() => _dapperService.Execute(query, reqModel));
-
-                if ( result != 1)
-                {
-                    model = Result<PatientReqModel>.SystemError("Something went wong");
-                    goto Result;
-                }
-
-                model = Result<PatientReqModel>.Success(reqModel, "Patient Create Success");
-
-            Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-
-                return Result<PatientReqModel>.SystemError(ex.ToString());
-            }
-            
-        }
-        #endregion
-      
-        #region DeletePatient
-        public async Task<Result<PatientReqModel>> DeletePatient(int  id)
-        {
-            try
-            {
-                Result<PatientReqModel> model = new Result<PatientReqModel>();
-
-                string findQuery = @"SELECT * From Patients WHERE Id = @Id AND del_flg = 0";
-
-                var patient =await Task.Run(() => _dapperService.Query<PatientReqModel>(findQuery, new
-                {
-                    Id = id
-                }));
-
-                if (patient.Count < 0)
-                {
-                    model = Result<PatientReqModel>.SystemError("Something Went Wrong");
-                    goto Result;
-                }
-                if(patient.Count == 0)
-                {
-                    model = Result<PatientReqModel>.Success(new PatientReqModel(),"No Data Found");
-                }
-
-                
-
-                string delQuery = @"UPDATE [dbo].[Patients]
-                                  SET [del_flg] = 1
-                                    WHERE Id = @Id";
-
-                int result = await Task.Run(() => _dapperService.Execute(delQuery, new  { 
-                    Id = id
-                }));
-
-                if(result < 0)
-                {
-                    model = Result<PatientReqModel>.SystemError("Something Went Wrong");
-                }
-
-                model = Result<PatientReqModel>.Success(patient[0], "Success");
-                Result:
-                return model;
-            }
-            catch (Exception ex)
-            {
-                return Result<PatientReqModel>.SystemError(ex.Message);
-            }
+            return Result<List<PatientResModel>>.SystemError($"Error retrieving patients: {ex.Message}");
         }
     }
 
-    #endregion
+    public async Task<Result<PatientResModel>> GetById(int id)
+    {
+        try
+        {
+            var patient = await _dapper.QueryFirstOrDefaultAsync<PatientResModel>(PatientQuery.GetById, new { Id = id });
+
+            if (patient is null)
+                return Result<PatientResModel>.NotFound("Patient not found.");
+
+            return Result<PatientResModel>.Success(patient, "Success");
+        }
+        catch (Exception ex)
+        {
+            return Result<PatientResModel>.SystemError($"Error retrieving patient: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<PatientResModel>> UpdatePatient(PatientReqModel dto, int id)
+    {
+        try
+        {
+            var exists = await _dapper.QueryFirstOrDefaultAsync<PatientResModel>(PatientQuery.GetById, new { Id = id });
+
+            if (exists is null)
+                return Result<PatientResModel>.NotFound("Patient not found.");
+
+            var res = await _dapper.ExecuteAsync(PatientQuery.Update, new
+            {
+                Id = id,
+                dto.Name,
+                dto.DateOfBirth,
+                dto.Gender,
+                dto.Phone,
+                dto.Email
+            });
+
+            if (res != 1)
+                return Result<PatientResModel>.SystemError("Failed to update patient.");
+
+            var updated = new PatientResModel
+            {
+                Id = id,
+                Name = dto.Name,
+                DateOfBirth = dto.DateOfBirth,
+                Gender = dto.Gender,
+                Phone = dto.Phone,
+                Email = dto.Email
+            };
+
+            return Result<PatientResModel>.Success(updated, "Update successful");
+        }
+        catch (Exception ex)
+        {
+            return Result<PatientResModel>.SystemError($"Error updating patient: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<PatientReqModel>> RegisterPatient(PatientReqModel dto)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return Result<PatientReqModel>.ValidationError("Name is required.");
+
+            var res = await _dapper.ExecuteAsync(PatientQuery.Insert, dto);
+
+            if (res != 1)
+                return Result<PatientReqModel>.SystemError("Failed to create patient.");
+
+            return Result<PatientReqModel>.Success(dto, "Patient created successfully");
+        }
+        catch (Exception ex)
+        {
+            return Result<PatientReqModel>.SystemError($"Error creating patient: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<PatientReqModel>> DeletePatient(int id)
+    {
+        try
+        {
+            var patient = await _dapper.QueryFirstOrDefaultAsync<PatientReqModel>(PatientQuery.GetById, new { Id = id });
+
+            if (patient is null)
+                return Result<PatientReqModel>.NotFound("Patient not found.");
+
+            var res = await _dapper.ExecuteAsync(PatientQuery.SoftDelete, new { Id = id });
+
+            if (res != 1)
+                return Result<PatientReqModel>.SystemError("Failed to delete patient.");
+
+            return Result<PatientReqModel>.Success(patient, "Patient deleted successfully");
+        }
+        catch (Exception ex)
+        {
+            return Result<PatientReqModel>.SystemError($"Error deleting patient: {ex.Message}");
+        }
+    }
 }

@@ -1,5 +1,5 @@
 ﻿using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Features.Model.Doctors;
+using HCAS.Domain.Models.Doctors;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +10,7 @@ namespace HCAS.Api.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class DoctorController : ControllerBase
+    public class DoctorController : BaseController
     {
         private readonly DoctorService _doctorService;
 
@@ -29,13 +29,7 @@ namespace HCAS.Api.Controllers
             [FromQuery] int? specializationId = null)
         {
             var result = await _doctorService.GetDoctorsAsync(page, pageSize, search, specializationId);
-            if (result.IsNotFound)
-                return NotFound(result.Message);
-
-            if (result.IsSystemError)
-                return StatusCode(500, result.Message);
-
-            return Ok(result.Data);
+            return Excute(result);   
         }
 
         // POST: api/v1/Doctor
@@ -43,14 +37,7 @@ namespace HCAS.Api.Controllers
         public async Task<IActionResult> RegisterDoctor([FromBody] DoctorsReqModel dto)
         {
             var result = await _doctorService.RegisterDoctorAsync(dto);
-
-            if (result.IsValidationError)
-                return BadRequest(result.Message);
-
-            if (result.IsSystemError)
-                return StatusCode(500, result.Message);
-
-            return Ok(result.Data);
+            return Excute(result);
         }
 
         // PUT: api/v1/Doctor/{id}
@@ -58,17 +45,7 @@ namespace HCAS.Api.Controllers
         public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorsReqModel dto)
         {
             var result = await _doctorService.UpdateDoctorAsync(id, dto);
-
-            if (result.IsValidationError)
-                return BadRequest(result.Message);
-
-            if (result.IsNotFound)
-                return NotFound(result.Message);
-
-            if (result.IsSystemError)
-                return StatusCode(500, result.Message);
-
-            return Ok(result.Data);
+            return Excute(result);
         }
 
         // DELETE: api/v1/Doctor/{id}
@@ -76,14 +53,7 @@ namespace HCAS.Api.Controllers
         public async Task<IActionResult> DeleteDoctor(int id)
         {
             var result = await _doctorService.DeleteDoctorAsync(id);
-
-            if (result.IsNotFound)
-                return NotFound(result.Message);
-
-            if (result.IsSystemError)
-                return StatusCode(500, result.Message);
-
-            return Ok(result.Message);
+            return Excute(result);
         }
     }
 }

@@ -1,15 +1,18 @@
-﻿
+﻿namespace HCAS.Shared;
+
 public class Result<T>
 {
     public bool IsSuccess { get; set; }
     public bool IsError { get { return !IsSuccess; } }
-    public bool IsValidationError { get { return Type == EnumRespType.ValidationError; } }
-    public bool IsSystemError { get { return Type == EnumRespType.SystemError; } }
-    public bool IsNotFound { get { return Type == EnumRespType.SystemError; } }
+    public bool IsValidationError() => Type == EnumRespType.ValidationError;
+    public bool IsSystemError() => Type == EnumRespType.SystemError;
+    public bool IsNotFound() => Type == EnumRespType.SystemError;
 
     private EnumRespType Type { get; set; }
-    public T Data { get; set; }
-    public string Message { get; set; }
+    public T Data { get; set; } = default!;
+    public string Message { get; set; } = null!;
+
+    public EnumRespType GetEnumRespType() => Type;
 
     #region Success
 
@@ -70,7 +73,6 @@ public class Result<T>
 
     #endregion
 
-
     #region NotFound
 
     public static Result<T> NotFound(string message, T? data = default)
@@ -85,18 +87,17 @@ public class Result<T>
     }
 
     #endregion
-
-    #region EnumRespType
-
-    public enum EnumRespType
-    {
-        None, 
-        Success,
-        ValidationError,
-        SystemError,
-        NotFound
-    }
-
-    #endregion
-
 }
+
+#region EnumRespType
+
+public enum EnumRespType
+{
+    None,
+    Success,
+    ValidationError,
+    SystemError,
+    NotFound
+}
+
+#endregion

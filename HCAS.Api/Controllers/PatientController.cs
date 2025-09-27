@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using HCAS.Domain.Features.Model.Patient;
 using HCAS.Domain.Features.Patient;
+using HCAS.Domain.Models.Patient;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

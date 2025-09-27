@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.Model.Patient
+namespace HCAS.Domain.Models.Patient
 {
     public class PatientResModel
     {
+        public int Id { get; set; }
 
         public string Name { get; set; }
 
@@ -18,6 +19,5 @@ namespace HCAS.Domain.Features.Model.Patient
         public string Phone {  get; set; }
 
         public string Email { get; set; }
-      
     }
 }

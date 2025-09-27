@@ -1,8 +1,8 @@
 ﻿using HCAS.Domain.Features.Specialization;
-using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using HCAS.Domain.Models.Specialization;
 
 namespace HCAS.Api.Controllers
 {
@@ -10,9 +10,9 @@ namespace HCAS.Api.Controllers
     [ApiController]
     public class SpecializationController : ControllerBase
     {
-        private readonly SpecializationSerivce _specializationSerivce;
+        private readonly SpecializationService _specializationSerivce;
 
-        public SpecializationController(SpecializationSerivce specializationSerivce)
+        public SpecializationController(SpecializationService specializationSerivce)
         {
             _specializationSerivce = specializationSerivce;        
         }

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Features.Model.Appoinment
+namespace HCAS.Domain.Models.Appoinment
 {
     public class AppoimentReqModel
     {
