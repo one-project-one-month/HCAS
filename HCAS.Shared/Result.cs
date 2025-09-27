@@ -90,7 +90,7 @@ public class Result<T>
 
     public enum EnumRespType
     {
-        None, 
+        None,
         Success,
         ValidationError,
         SystemError,
@@ -99,4 +99,9 @@ public class Result<T>
 
     #endregion
 
+}
+public class PagedResult<T>
+{
+    public IEnumerable<T> Items { get; set; } = new List<T>();
+    public int TotalCount { get; set; }
 }
