@@ -17,10 +17,20 @@ namespace HCAS.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetStaffListAsync()
+        public async Task<IActionResult> GetStaffListAsync(int page = 1, int pageSize = 10, string? search = null)
         {
-            var staffList = await _staffService.GetAllStaffAsync();
-            return Ok(staffList.Data);
+            var staffList = await _staffService.GetAllStaffAsync(page,pageSize,search);
+      
+            if (!staffList.IsSuccess)
+                return BadRequest(staffList.Message);
+
+            var pagedResult = new
+            {
+                Items = staffList.Data,           // The staff list
+                TotalCount = staffList.Message // Total number of records
+            };
+
+            return Ok(pagedResult);
         }
 
         [HttpPost]
