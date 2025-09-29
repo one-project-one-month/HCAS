@@ -1,0 +1,205 @@
+﻿@page "/DoctorSchedule"
+@inject DoctorScheduleService doctorScheduleService
+@inject IDialogService DialogService
+
+@using HCAS.Domain.Features.DoctorSchedule
+@using HCAS.Shared
+@using HCAS.WebApp.Components.Common
+@using MudBlazor
+
+<PageTitle>Doctor Schedule</PageTitle>
+
+<MudPaper class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Doctor Schedule Management</MudText>
+
+    <div class="d-flex mb-4 gap-2">
+        <MudTextField @bind-Value="searchTerm" 
+                      Placeholder="Search by doctor name..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="Icons.Material.Filled.Search"
+                      Immediate="true"
+                      DebounceInterval="300"
+                      OnDebounceIntervalElapsed="OnSearchChanged"
+                      Style="width: 300px;" />
+
+        <MudButton  
+                   Color="Color.Primary" 
+                   OnClick="ShowAddDialog"
+                   StartIcon="Icons.Material.Filled.Add">
+            Add Schedule
+        </MudButton>
+    </div>
+
+    @if (loading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="pageSchedules" Hover="true" Bordered="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Actions</MudTh>
+                <MudTh>No.</MudTh>
+                <MudTh>Doctor Name</MudTh>
+                <MudTh>Schedule Date</MudTh>
+                <MudTh>Max Patients</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup  Size="Size.Small">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Color="Color.Primary" 
+                                       OnClick="@(() => ShowEditDialog(context))" 
+                                       Title="Edit Schedule" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                       Color="Color.Error" 
+                                       OnClick="@(() => DeleteSchedule(context.Id))" 
+                                       Title="Delete Schedule" />
+                    </MudButtonGroup>
+                </MudTd>
+                <MudTd DataLabel="No.">@((page - 1) * pageSize + pageSchedules.IndexOf(context) + 1)</MudTd>
+                <MudTd DataLabel="Doctor Name">@GetDoctorName(context.DoctorId)</MudTd>
+                <MudTd DataLabel="Schedule Date">@context.ScheduleDate.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Max Patients">@context.MaxPatients</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No schedules found</MudText>
+            </NoRecordsContent>
+        </MudTable>
+
+        @if (totalCount > 0)
+        {
+            <div class="d-flex justify-space-between align-center mt-4">
+                <MudText Typo="Typo.body2">
+                    Showing @((page - 1) * pageSize + 1) to @(Math.Min(page * pageSize, totalCount)) of @totalCount entries
+                </MudText>
+                <MudPagination 
+                    Rectangular="true" 
+                    Variant="MudBlazor.Variant.Outlined" 
+                    SelectedChanged="PageChanged"
+                    Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))" 
+                    Selected="page" />
+            </div>
+        }
+    }
+</MudPaper>
+
+@code {
+    List<DoctorScheduleResModel> pageSchedules = new List<DoctorScheduleResModel>();
+    List<DoctorModel> doctors = new List<DoctorModel>();
+    
+    int page = 1;
+    int pageSize = 10;
+    int totalCount = 0;
+    string searchTerm = string.Empty;
+    bool loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctors();
+        await LoadSchedules();
+    }
+
+    async Task LoadSchedules()
+    {
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await doctorScheduleService.GetSchedulesByPage(page, pageSize, searchTerm);
+            if (result.IsSuccess)
+            {
+                pageSchedules = result.Data.Items.ToList();
+                totalCount = result.Data.TotalCount;
+            }
+            else
+            {
+                pageSchedules = new List<DoctorScheduleResModel>();
+                totalCount = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            pageSchedules = new List<DoctorScheduleResModel>();
+            totalCount = 0;
+            // You might want to show an error message here
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    async Task LoadDoctors()
+    {
+        var result = await doctorScheduleService.GetDoctors();
+        doctors = result?.ToList() ?? new List<DoctorModel>();
+    }
+
+    private async Task DeleteSchedule(int id)
+    {
+        var schedule = pageSchedules.FirstOrDefault(s => s.Id == id);
+        if (schedule == null) return;
+
+        bool confirmed = await DialogService.ShowMessageBox(
+            title: "Confirm Delete",
+            message: $"Are you sure you want to delete the schedule?",
+            yesText: "Delete", 
+            cancelText: "Cancel"
+        ) ?? false;
+
+        if (!confirmed) return;
+
+        var result = await doctorScheduleService.DeleteScheduleAsync(id);
+        if (result.IsSuccess)
+        {
+            await LoadSchedules();
+        }
+    }
+
+    async Task ShowEditDialog(DoctorScheduleResModel schedule)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Schedule", schedule }
+        };
+
+        var dialog = await DialogService.ShowAsync<DoctorScheduleDialog>("Edit Schedule", parameters);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled)
+        {
+            await LoadSchedules();
+        }
+    }
+
+    async Task OnSearchChanged()
+    {
+        page = 1;
+        await LoadSchedules();
+    }
+
+    void PageChanged(int newPage)
+    {
+        page = newPage;
+        _ = LoadSchedules();
+    }
+
+    async Task ShowAddDialog()
+    {
+        var dialog = await DialogService.ShowAsync<DoctorScheduleDialog>("Add Schedule");
+        var result = await dialog.Result;
+        
+        if (!result.Canceled)
+        {
+            await LoadSchedules();
+        }
+    }
+
+    string GetDoctorName(int? id)
+	{
+		return doctors.FirstOrDefault(s => s.Id == id)?.Name ?? "";
+	}
+}

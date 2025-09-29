@@ -8,6 +8,43 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.DoctorSchedule;
 
+public class DoctorScheduleReqModel
+{
+
+    public int DoctorId { get; set; }
+
+    public DateTime ScheduleDate { get; set; }
+
+    public int MaxPatients { get; set; }
+
+}
+
+public class DoctorScheduleResModel
+{
+    public int Id { get; set; }
+
+    public int DoctorId { get; set; }
+
+    public DateTime ScheduleDate { get; set; }
+
+    public int MaxPatients { get; set; }
+
+    public bool del_flg { get; set; }
+}
+
+public class DoctorModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
+}
+
+public class PageResult<T>
+{
+    public IEnumerable<T> Items { get; set; } = new List<T>();
+
+    public int TotalCount { get; set; }
+
+}
 public static class DoctorScheduleQuery
 {
     public const string Insert = @"
@@ -30,6 +67,21 @@ public static class DoctorScheduleQuery
     public const string SoftDelete = @"
         UPDATE DoctorSchedules SET del_flg = 1 WHERE Id = @Id";
 
+    public const string GetAllPaged = @"
+        SELECT ds.Id, ds.DoctorId, d.Name AS DoctorName, ds.ScheduleDate, ds.MaxPatients, ds.del_flg
+        FROM DoctorSchedules ds
+        INNER JOIN Doctors d ON ds.DoctorId = d.Id
+        WHERE ds.del_flg = 0
+        {0}
+        ORDER BY ds.ScheduleDate DESC
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+    public const string CountAll = @"
+        SELECT COUNT(*)
+        FROM DoctorSchedules ds
+        INNER JOIN Doctors d ON ds.DoctorId = d.Id
+        WHERE ds.del_flg = 0
+        {0}";
     public const string GetAvailable = @"
         SELECT 
             ds.Id, 
@@ -45,6 +97,12 @@ public static class DoctorScheduleQuery
         WHERE ds.ScheduleDate > GETDATE()
         GROUP BY ds.Id, d.Name, ds.ScheduleDate, ds.MaxPatients, s.Name
         ORDER BY ds.ScheduleDate";
+
+    public const string GetDoctors = @"
+        SELECT Id, Name
+        FROM Doctors
+        WHERE del_flg = 0
+        ORDER BY Name";
 }
 public class DoctorScheduleService
 {
@@ -155,6 +213,57 @@ public class DoctorScheduleService
         }
     }
 
+    public async Task<Result<PageResult<DoctorScheduleResModel>>> GetSchedulesByPage(int page = 1, int pageSize = 10, string? searchTerm = null)
+    {
+        try
+        {
+            var whereClause = "";
+            var parameters = new Dictionary<string, object>
+            {
+                {"Offset", (page - 1) * pageSize},
+                {"PageSize", pageSize}
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                whereClause = "AND d.Name LIKE @SearchTerm";
+                parameters.Add("SearchName", $"%{searchTerm}%");
+            }
+
+            var query = string.Format(DoctorScheduleQuery.GetAllPaged, whereClause);
+            var countQuery = string.Format(DoctorScheduleQuery.CountAll, whereClause);
+
+            var schedules = await _dapper.QueryAsync<DoctorScheduleResModel>(query, parameters);
+            var totalCount = await _dapper.QueryFirstOrDefaultAsync<int>(countQuery, parameters);
+
+
+            var result = new PageResult<DoctorScheduleResModel>
+            {
+                Items = schedules,
+                TotalCount = totalCount
+            };
+
+            return Result<PageResult<DoctorScheduleResModel>>.Success(result, "Success");
+        }
+        catch (Exception ex)
+        {
+            return Result<PageResult<DoctorScheduleResModel>>.SystemError($"Error retrieving schedules: {ex.Message}");
+        }
+    }
+
+    public async Task<IEnumerable<DoctorModel>> GetDoctors()
+    {
+        try
+        {
+            var result = await _dapper.QueryAsync<DoctorModel>(DoctorScheduleQuery.GetDoctors);
+            return result;
+        }
+        catch (Exception)
+        {
+            return new List<DoctorModel>();
+        }
+    }
+
     public async Task<Result<IEnumerable<DoctorScheduleResModel>>> GetAvailableSchedules()
     {
         try
@@ -170,4 +279,22 @@ public class DoctorScheduleService
             return Result<IEnumerable<DoctorScheduleResModel>>.SystemError($"Error retrieving available schedules: {ex.Message}");
         }
     }
+
+
+    public async Task<Result<DoctorScheduleResModel>> CreateScheduleAsync(DoctorScheduleReqModel dto)
+    {
+        return await CreateSchedule(dto);
+    }
+
+    public async Task<Result<DoctorScheduleResModel>> UpdateScheduleAsync(int id, DoctorScheduleReqModel dto)
+    {
+        return await UpdateSchedule(id, dto);
+    }
+
+    public async Task<Result<DoctorScheduleResModel>> DeleteScheduleAsync(int id)
+    {
+        return await DeleteSchedule(id);
+    }
+
+
 }
