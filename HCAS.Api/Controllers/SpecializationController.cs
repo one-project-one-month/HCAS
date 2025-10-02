@@ -1,4 +1,4 @@
-﻿using HCAS.Domain.Features.Specialization;
+﻿using HCAS.Domain.Features.Specializations;
 using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
@@ -10,9 +10,9 @@ namespace HCAS.Api.Controllers
     [ApiController]
     public class SpecializationController : ControllerBase
     {
-        private readonly SpecializationSerivce _specializationSerivce;
+        private readonly SpecializationService _specializationSerivce;
 
-        public SpecializationController(SpecializationSerivce specializationSerivce)
+        public SpecializationController(SpecializationService specializationSerivce)
         {
             _specializationSerivce = specializationSerivce;
         }
@@ -20,28 +20,28 @@ namespace HCAS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSpecializationList()
         {
-            var specializationList = await _specializationSerivce.GetAllSpecializationList();
-            return Ok(specializationList.Data);
+            var specializationList = await _specializationSerivce.GetSpecializationAsync();
+            return Execute(specializationList.Data);
         }
 
         [HttpPost]
         public async Task<IActionResult> RegisterSpecialization(SpecializationReqModel dto)
         {
-            var registerSpecialization = await _specializationSerivce.RegisterSpecializations(dto);
+            var registerSpecialization = await _specializationSerivce.RegisterSpecializationAsync(dto);
             return Ok(registerSpecialization.Data);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateSpecialization(SpecializationReqModel dto)
+        public async Task<IActionResult> UpdateSpecialization(int id,SpecializationReqModel dto)
         {
-            var updateSpecialization = await _specializationSerivce.UpdateSpecializations(dto);
+            var updateSpecialization = await _specializationSerivce.UpdateSpecializationAsync(id,dto);
             return Ok(updateSpecialization.Data);
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteSpecialization(int id)
         {
-            var deleteSpecialization = await _specializationSerivce.DeleteSpecializations(id);
+            var deleteSpecialization = await _specializationSerivce.DeleteSpecializationAsync(id);
             return Ok(deleteSpecialization.Data);
         }
     }
