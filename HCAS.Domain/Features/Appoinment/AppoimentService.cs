@@ -1,4 +1,5 @@
-﻿using HCAS.Domain.Features.Model.Appoinment;
+﻿using HCAS.Domain.Features.DoctorSchedule;
+using HCAS.Domain.Features.Model.Appoinment;
 using HCAS.Domain.Models.Appoinment;
 using HCAS.Domain.Models.DoctorSchedule;
 using HCAS.Shared;
