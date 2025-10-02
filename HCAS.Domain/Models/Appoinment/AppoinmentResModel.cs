@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Models.Appoinment
+namespace HCAS.Domain.Features.Model.Appoinment
 {
-    public class AppoimentReqModel
+    public class AppoinmentResModel
     {
-     //  public int Id { get; set; }
+        public int Id { get; set; }
 
         public int ScheduleId { get; set; }
 
@@ -25,10 +25,8 @@ namespace HCAS.Domain.Models.Appoinment
 
         public bool DelFlg { get; set; }
 
-     //   public virtual Doctor Doctor { get; set; } = null!;
+       // public virtual Doctor Doctor { get; set; } = null!;
 
-       // public virtual Patient Patient { get; set; } = null!;
-
-        //public virtual DoctorSchedule Schedule { get; set; } = null!;
+       
     }
 }

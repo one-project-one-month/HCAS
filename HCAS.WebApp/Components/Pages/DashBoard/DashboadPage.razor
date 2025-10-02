@@ -1,0 +1,100 @@
+﻿@page "/Dashboard"
+@inject IJSRuntime JS
+@inject AppoinmentService AppointmentService
+@inject PatientService PatientService
+
+<div class="dashboard-charts">
+    <div id="appointmentsChart" style="width:100%; height:400px;"></div>
+    <div id="patientsChart" style="width:100%; height:400px; margin-top:40px;"></div>
+</div>
+
+@code {
+    private List<int> appointmentCounts = new();
+    private List<string> appointmentDates = new();
+
+    private int maleCount = 0;
+    private int femaleCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointmentData();
+        await LoadPatientData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Appointments over time (Column chart)
+            await JS.InvokeVoidAsync("Highcharts.chart", "appointmentsChart", new
+            {
+                chart = new { type = "line" },
+                title = new { text = "Appointments Over Time" },
+                xAxis = new { categories = appointmentDates },
+                yAxis = new { title = new { text = "Appointments" } },
+                series = new[] { new { name = "Appointments", data = appointmentCounts } },
+                colors = new[] { "#2f7ed8" },
+                tooltip = new { shared = true, valueSuffix = " appointments" }
+            });
+
+            // Patients by gender (Pie chart)
+            await JS.InvokeVoidAsync("Highcharts.chart", "patientsChart", new
+            {
+                chart = new { type = "pie" },
+                title = new { text = "Patients by Gender" },
+                series = new[]
+                {
+                    new
+                    {
+                        name = "Patients",
+                        colorByPoint = true,
+                        data = new[]
+                        {
+                            new { name = "Male", y = maleCount, color = "#1f77b4" },
+                            new { name = "Female", y = femaleCount, color = "#ff69b4" }
+                        }
+                    }
+                },
+                tooltip = new { pointFormat = "{series.name}: <b>{point.y}</b>" },
+                plotOptions = new { pie = new { allowPointSelect = true, cursor = "pointer", dataLabels = new { enabled = true, format = "<b>{point.name}</b>: {point.y}" } } }
+            });
+        }
+    }
+
+    private async Task LoadAppointmentData()
+    {
+        var result = await AppointmentService.GetAllAppointments();
+
+        if (result.IsSuccess)
+        {
+            var appointments = result.Data.OrderBy(a => a.AppointmentDate).ToList();
+            Console.WriteLine($"Appointments count: {appointments.Count}");
+
+
+            // Get unique dates for x-axis
+            appointmentDates = appointments
+                .Select(a => a.AppointmentDate.ToString("MMM dd"))
+                .Distinct()
+                .ToList();
+
+            // Count appointments per date
+            appointmentCounts = appointmentDates
+                .Select(date => appointments.Count(a => a.AppointmentDate.ToString("MMM dd") == date))
+                .ToList();
+
+            Console.WriteLine($"Dates: {string.Join(",", appointmentDates)}");
+            Console.WriteLine($"Counts: {string.Join(",", appointmentCounts)}");
+        }
+    }
+
+    private async Task LoadPatientData()
+    {
+        var result = await PatientService.GetAllPatient();
+
+        if (result.IsSuccess)
+        {
+            maleCount = result.Data.Count(p => p.Gender.Equals("male", StringComparison.OrdinalIgnoreCase));
+            femaleCount = result.Data.Count(p => p.Gender.Equals("female", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+}
