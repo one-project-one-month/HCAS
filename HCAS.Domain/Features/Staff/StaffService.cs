@@ -17,7 +17,7 @@ namespace HCAS.Domain.Features.Staff
 
         public StaffService(DapperService dapperService)
         {
-            _dapperService = dapperService;
+            _dapperServiceService = dapperService;
         }
         #region GetAllStaffAsync
         public async Task<Result<PagedResult<StaffResModel>>> GetAllStaffAsync(
@@ -52,8 +52,8 @@ namespace HCAS.Domain.Features.Staff
                 };
 
                 // Query DB
-                var totalCount = await _dapperService.QueryFirstOrDefaultAsync<int>(countQuery, parameters);
-                var staffs = await _dapperService.QueryAsync<StaffResModel>(dataQuery, parameters);
+                var totalCount = await _dapperServiceService.QueryFirstOrDefaultAsync<int>(countQuery, parameters);
+                var staffs = await _dapperServiceService.QueryAsync<StaffResModel>(dataQuery, parameters);
 
                 //if (staffs is null || !staffs.Any())
                 //{
@@ -119,7 +119,7 @@ namespace HCAS.Domain.Features.Staff
                     Password = dto.Password
                 };
 
-                var res = await _dapperService.ExecuteAsync(query, result);
+                var res = await _dapperServiceService.ExecuteAsync(query, result);
 
                 if (res != 1)
                 {
@@ -172,7 +172,7 @@ namespace HCAS.Domain.Features.Staff
                     Username = dto.Username,
                     Password = dto.Password
                 };
-                var res = await _dapperService.ExecuteAsync(updateQuery, result);
+                var res = await _dapperServiceService.ExecuteAsync(updateQuery, result);
                 if (res != 1)
                 {
                     ReqModel = Result<StaffReqModel>.SystemError("Failed to update staff.");
@@ -202,7 +202,7 @@ namespace HCAS.Domain.Features.Staff
                 }
 
                 var exitingStaffQuery = "SELECT COUNT(1) FROM Staff WHERE Id = @Id AND del_flg = 0";
-                var exitingCount = await _dapperService.QueryFirstOrDefaultAsync<int>(exitingStaffQuery, new { Id = id });
+                var exitingCount = await _dapperServiceService.QueryFirstOrDefaultAsync<int>(exitingStaffQuery, new { Id = id });
                 if (exitingCount == 0)
                 {
                     Result<StaffReqModel>.ValidationError("Staff not found.");
@@ -214,7 +214,7 @@ namespace HCAS.Domain.Features.Staff
                 {
                     Id = id
                 };
-                var res = await _dapperService.ExecuteAsync(deleteQuery, result);
+                var res = await _dapperServiceService.ExecuteAsync(deleteQuery, result);
                 if (res != 1)
                 {
                     ReqModel = Result<StaffReqModel>.SystemError("Failed to delete staff.");
@@ -247,7 +247,7 @@ namespace HCAS.Domain.Features.Staff
 
 //        string query = "SELECT Id, Name, Email, Phone, Role, Username FROM Staff WHERE del_flg = 0";
 
-//        var staffs = await Task.Run(() => _dapperService.Query<StaffResModel>(query));
+//        var staffs = await Task.Run(() => _dapperServiceService.Query<StaffResModel>(query));
 
 //        if (staffs is null)
 //        {
