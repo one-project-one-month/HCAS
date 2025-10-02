@@ -1,200 +1,203 @@
-﻿@using HCAS.Domain.Features.DoctorSchedule
-@using HCAS.Shared
-@using MudBlazor
+﻿@page "/DoctorSchedule"
 @inject DoctorScheduleService doctorScheduleService
-@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
-<MudDialog Style="min-width: 500px;">
-    <DialogContent>
-        @if (_loading)
+@using HCAS.Domain.Features.DoctorSchedule
+@using HCAS.Shared
+@using HCAS.WebApp.Components.Common
+@using MudBlazor
+
+<PageTitle>Doctor Schedule</PageTitle>
+
+<MudPaper class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Doctor Schedule Management</MudText>
+
+    <div class="d-flex mb-4 gap-2">
+        <MudTextField @bind-Value="searchTerm"
+                      Placeholder="Search by doctor name..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="Icons.Material.Filled.Search"
+                      Immediate="true"
+                      DebounceInterval="300"
+                      OnDebounceIntervalElapsed="OnSearchChanged"
+                      Style="width: 300px;" />
+
+        <MudButton Color="Color.Primary"
+                   OnClick="ShowAddDialog"
+                   StartIcon="Icons.Material.Filled.Add">
+            Add Schedule
+        </MudButton>
+    </div>
+
+    @if (loading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="pageSchedules" Hover="true" Bordered="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Actions</MudTh>
+                <MudTh>No.</MudTh>
+                <MudTh>Doctor Name</MudTh>
+                <MudTh>Schedule Date</MudTh>
+                <MudTh>Max Patients</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup Size="Size.Small">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => ShowEditDialog(context))"
+                                       Title="Edit Schedule" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       OnClick="@(() => DeleteSchedule(context.Id))"
+                                       Title="Delete Schedule" />
+                    </MudButtonGroup>
+                </MudTd>
+                <MudTd DataLabel="No.">@((page - 1) * pageSize + pageSchedules.IndexOf(context) + 1)</MudTd>
+                <MudTd DataLabel="Doctor Name">@GetDoctorName(context.DoctorId)</MudTd>
+                <MudTd DataLabel="Schedule Date">@context.ScheduleDate.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Max Patients">@context.MaxPatients</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No schedules found</MudText>
+            </NoRecordsContent>
+        </MudTable>
+
+        @if (totalCount > 0)
         {
-            <div class="d-flex justify-center pa-4">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <div class="d-flex justify-space-between align-center mt-4">
+                <MudText Typo="Typo.body2">
+                    Showing @((page - 1) * pageSize + 1) to @(Math.Min(page * pageSize, totalCount)) of @totalCount entries
+                </MudText>
+                <MudPagination Rectangular="true"
+                               Variant="MudBlazor.Variant.Outlined"
+                               SelectedChanged="PageChanged"
+                               Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+                               Selected="page" />
             </div>
         }
-        else
-        {
-            <MudText Typo="Typo.h6" Class="mb-4">@(_isEdit ? "Edit Schedule" : "Add Schedule")</MudText>
-
-            <MudForm @ref="form" @bind-IsValid="@_isFormValid" @bind-Errors="@_errors">
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudSelect T="int?" 
-                                   Label="Doctor Name" 
-                                   @bind-Value="doctorId" 
-                                   Required="true" 
-                                   RequiredError="Please select a doctor"
-                                   Variant="MudBlazor.Variant.Outlined">
-                            <MudSelectItem Value="@((int?)null)" Disabled="true">Select Doctor</MudSelectItem>
-                            @foreach (var doctor in Doctors)
-                            {
-                                <MudSelectItem Value="@((int?)doctor.Id)">@doctor.Name</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudItem>
-
-                    <MudItem xs="12">
-                        <MudDatePicker Label="Schedule Date" 
-                                       @bind-Date="scheduleDate" 
-                                       Required="true" 
-                                       RequiredError="Please select a schedule date"
-                                       MinDate="DateTime.Today" 
-                                       Placeholder="Select schedule date"
-                                       Variant="MudBlazor.Variant.Outlined" />
-                    </MudItem>
-
-                    <MudItem xs="12">
-                        <MudNumericField T="int?"
-                                         Label="Maximum Patients" 
-                                         @bind-Value="maxPatients"
-                                         Required="true" 
-                                         RequiredError="Please enter maximum patients"
-                                         Min="1" 
-                                         Max="100" 
-                                         Placeholder="Enter maximum number of patients"
-                                         Variant="MudBlazor.Variant.Outlined" />
-                    </MudItem>
-                </MudGrid>
-
-                @if (_errors.Length > 0)
-                {
-                    <MudAlert Severity="Severity.Error" Class="mt-3">
-                        @foreach (var error in _errors)
-                        {
-                            <div>@error</div>
-                        }
-                    </MudAlert>
-                }
-            </MudForm>
-        }
-    </DialogContent>
-
-    <DialogActions>
-        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="_loading">Cancel</MudButton>
-        <MudButton Color="Color.Primary" 
-                   OnClick="SaveSchedule" 
-                   Disabled="@(!_isFormValid || _loading)"
-                   Variant="MudBlazor.Variant.Filled">
-            @if (_loading)
-            {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                <MudText Class="ms-2">Saving...</MudText>
-            }
-            else
-            {
-                <MudText>Save</MudText>
-            }
-        </MudButton>
-        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="_loading">Cancel</MudButton>
-    </DialogActions>
-</MudDialog>
+    }
+</MudPaper>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public DoctorScheduleResModel? Schedule { get; set; }
+    List<DoctorScheduleResModel> pageSchedules = new List<DoctorScheduleResModel>();
+    List<DoctorModel> doctors = new List<DoctorModel>();
 
-    [Parameter] public DoctorScheduleResModel? Schedule {get;set;}
-
-    private DoctorScheduleReqModel scheduleModel = new DoctorScheduleReqModel();
-
-    private List<DoctorModel> Doctors = new List<DoctorModel>();
-    private DateTime? scheduleDate;
-    private int? doctorId;
-    private int? maxPatients;
-    private bool _loading = false;
-
-    private bool _isEdit => Schedule is not null;
-    
-    private bool _isFormValid = false;
-    private string[] _errors = Array.Empty<string>();
-    private MudForm form = default!;
+    int page = 1;
+    int pageSize = 10;
+    int totalCount = 0;
+    string searchTerm = string.Empty;
+    bool loading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        _loading = true;
-
-        if (_isEdit && Schedule is not null)
-        {
-            doctorId = Schedule.DoctorId;
-            scheduleDate = Schedule.ScheduleDate;
-            maxPatients = Schedule.MaxPatients;
-        }
-        else
-        {
-            scheduleDate = DateTime.Today.AddDays(1); // Default to tomorrow
-            doctorId = null;
-            maxPatients = null;
-        }
-
-        var result = await doctorScheduleService.GetDoctors();
-        Doctors = result?.ToList() ?? new List<DoctorModel>();
-
-        _loading = false;
-        StateHasChanged();
+        await LoadDoctors();
+        await LoadSchedules();
     }
 
-    private async Task SaveSchedule()
+    async Task LoadSchedules()
     {
-        await form.Validate();
-        
-        if (!_isFormValid)
-            return;
+        loading = true;
+        StateHasChanged();
 
-        // Validate required fields manually since form validation might not catch nullable issues
-        if (!doctorId.HasValue)
+        try
         {
-            Snackbar.Add("Please select a doctor", Severity.Error);
-            return;
+            var result = await doctorScheduleService.GetSchedulesByPage(page, pageSize, searchTerm);
+            if (result.IsSuccess)
+            {
+                pageSchedules = result.Data.Items.ToList();
+                totalCount = result.Data.TotalCount;
+            }
+            else
+            {
+                pageSchedules = new List<DoctorScheduleResModel>();
+                totalCount = 0;
+            }
         }
-
-        if (!scheduleDate.HasValue)
+        catch (Exception ex)
         {
-            Snackbar.Add("Please select a schedule date", Severity.Error);
-            return;
+            pageSchedules = new List<DoctorScheduleResModel>();
+            totalCount = 0;
+            // You might want to show an error message here
         }
-
-        if (!maxPatients.HasValue || maxPatients.Value <= 0)
+        finally
         {
-            Snackbar.Add("Please enter a valid number of maximum patients", Severity.Error);
-            return;
+            loading = false;
+            StateHasChanged();
+        }
     }
 
-    private async Task SaveSchedule(){
-        _loading = true;
+    async Task LoadDoctors()
+    {
+        var result = await doctorScheduleService.GetDoctors();
+        doctors = result?.ToList() ?? new List<DoctorModel>();
+    }
 
-        var scheduleModel = new DoctorScheduleReqModel
-        {
-            DoctorId = doctorId.Value,
-            ScheduleDate = scheduleDate.Value,
-            MaxPatients = maxPatients.Value
-        };
+    private async Task DeleteSchedule(int id)
+    {
+        var schedule = pageSchedules.FirstOrDefault(s => s.Id == id);
+        if (schedule == null) return;
 
-        Result<DoctorScheduleResModel> result;
-        if (_isEdit && Schedule is not null)
-        {
-            result = await doctorScheduleService.UpdateScheduleAsync(Schedule.Id, scheduleModel);
-        }
-        else
-        {
-            result = await doctorScheduleService.CreateScheduleAsync(scheduleModel);
-        }
+        bool confirmed = await DialogService.ShowMessageBox(
+            title: "Confirm Delete",
+            message: $"Are you sure you want to delete the schedule?",
+            yesText: "Delete",
+            cancelText: "Cancel"
+        ) ?? false;
 
-        _loading = false;
+        if (!confirmed) return;
 
+        var result = await doctorScheduleService.DeleteScheduleAsync(id);
         if (result.IsSuccess)
         {
-            Snackbar.Add(result.Message, Severity.Success);
-            MudDialog.Close(DialogResult.Ok(true));
-        }
-        else
-        {
-            Snackbar.Add(result.Message, Severity.Error);
+            await LoadSchedules();
         }
     }
 
-    private void Cancel()
+    async Task ShowEditDialog(DoctorScheduleResModel schedule)
     {
-        MudDialog.Cancel();
+        var parameters = new DialogParameters
+        {
+            { "Schedule", schedule }
+        };
+
+        var dialog = await DialogService.ShowAsync<DoctorScheduleDialog>("Edit Schedule", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadSchedules();
+        }
     }
 
+    async Task OnSearchChanged()
+    {
+        page = 1;
+        await LoadSchedules();
+    }
+
+    void PageChanged(int newPage)
+    {
+        page = newPage;
+        _ = LoadSchedules();
+    }
+
+    async Task ShowAddDialog()
+    {
+        var dialog = await DialogService.ShowAsync<DoctorScheduleDialog>("Add Schedule");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadSchedules();
+        }
+    }
+
+    string GetDoctorName(int? id)
+    {
+        return doctors.FirstOrDefault(s => s.Id == id)?.Name ?? "";
+    }
 }
