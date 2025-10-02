@@ -91,13 +91,20 @@ public class Result<T>
 
 #region EnumRespType
 
-public enum EnumRespType
-{
-    None,
-    Success,
-    ValidationError,
-    SystemError,
-    NotFound
-}
+    public enum EnumRespType
+    {
+        None,
+        Success,
+        ValidationError,
+        SystemError,
+        NotFound
+    }
 
-#endregion
+    #endregion
+
+}
+public class PagedResult<T>
+{
+    public IEnumerable<T> Items { get; set; } = new List<T>();
+    public int TotalCount { get; set; }
+}

@@ -9,7 +9,7 @@
         @if (_loading)
         {
             <div class="d-flex justify-center pa-4">
-                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
             </div>
         }
         else
@@ -85,6 +85,7 @@
                 <MudText>Save</MudText>
             }
         </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="_loading">Cancel</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -92,12 +93,18 @@
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public DoctorScheduleResModel? Schedule { get; set; }
 
+    [Parameter] public DoctorScheduleResModel? Schedule {get;set;}
+
+    private DoctorScheduleReqModel scheduleModel = new DoctorScheduleReqModel();
+
     private List<DoctorModel> Doctors = new List<DoctorModel>();
     private DateTime? scheduleDate;
     private int? doctorId;
     private int? maxPatients;
     private bool _loading = false;
+
     private bool _isEdit => Schedule is not null;
+    
     private bool _isFormValid = false;
     private string[] _errors = Array.Empty<string>();
     private MudForm form = default!;
@@ -150,8 +157,9 @@
         {
             Snackbar.Add("Please enter a valid number of maximum patients", Severity.Error);
             return;
-        }
+    }
 
+    private async Task SaveSchedule(){
         _loading = true;
 
         var scheduleModel = new DoctorScheduleReqModel
@@ -188,4 +196,5 @@
     {
         MudDialog.Cancel();
     }
+
 }
