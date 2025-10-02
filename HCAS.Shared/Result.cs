@@ -11,6 +11,8 @@ public class Result<T>
     public T Data { get; set; }
     public string Message { get; set; }
 
+    public EnumRespType GetEnumRespType() => Type;
+
     #region Success
 
     public static Result<T> Success(T data, string message = "Success")
