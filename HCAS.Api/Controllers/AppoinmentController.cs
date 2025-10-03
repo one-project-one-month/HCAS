@@ -9,9 +9,9 @@ namespace HCAS.Api.Controllers
     [ApiController]
     public class AppoinmentController : ControllerBase
     {
-        private readonly AppoinmentService _appointment;
+        private readonly AppointmentService _appointment;
 
-        public AppoinmentController(AppoinmentService appointment)
+        public AppoinmentController(AppointmentService appointment)
         {
             _appointment = appointment;
         }

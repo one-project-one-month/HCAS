@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Appoinment
 {
-    public static class AppoinmentQuery
+    public static class AppointmentQuery
     {
         public const string GetAll = @"
             SELECT 
@@ -62,11 +62,11 @@ namespace HCAS.Domain.Features.Appoinment
             DELETE FROM Appointments WHERE Id = @AppointmentId";
     }
 
-    public class AppoinmentService
+    public class AppointmentService
     {
         private readonly DapperService _dapper;
 
-        public AppoinmentService(DapperService dapperService)
+        public AppointmentService(DapperService dapperService)
         {
             _dapper = dapperService;
         }
@@ -75,13 +75,14 @@ namespace HCAS.Domain.Features.Appoinment
         {
             try
             {
-                var result = await _dapper.QueryAsync<AppoinmentResModel>(AppoinmentQuery.GetAll);
+                var result = await _dapper.QueryAsync<AppoinmentResModel>(AppointmentQuery.GetAll);
                 var message = result.Any() ? "Success" : "No appointments found";
                 return Result<IEnumerable<AppoinmentResModel>>.Success(result, message);
             }
             catch (Exception ex)
             {
-                return Result<IEnumerable<AppoinmentResModel>>.SystemError($"Error retrieving appointments: {ex.Message}");
+                return Result<IEnumerable<AppoinmentResModel>>.SystemError(
+                    $"Error retrieving appointments: {ex.Message}");
             }
         }
 
@@ -89,7 +90,9 @@ namespace HCAS.Domain.Features.Appoinment
         {
             try
             {
-                var appointment = await _dapper.QueryFirstOrDefaultAsync<AppoinmentResModel>(AppoinmentQuery.GetById, new { Id = id });
+                var appointment =
+                    await _dapper.QueryFirstOrDefaultAsync<AppoinmentResModel>(AppointmentQuery.GetById,
+                        new { Id = id });
                 var message = appointment == null ? "No appointment found" : "Success";
                 return Result<AppoinmentResModel>.Success(appointment, message);
             }
@@ -111,12 +114,15 @@ namespace HCAS.Domain.Features.Appoinment
                     FROM DoctorSchedules 
                     WHERE Id = @ScheduleId AND del_flg = 0";
 
-                var schedule = await _dapper.QueryFirstOrDefaultAsync<DoctorScheduleResModel>(scheduleQuery, new { ScheduleId = scheduleId });
+                var schedule =
+                    await _dapper.QueryFirstOrDefaultAsync<DoctorScheduleResModel>(scheduleQuery,
+                        new { ScheduleId = scheduleId });
 
                 if (schedule == null)
                     return Result<AppoinmentResModel>.ValidationError("Invalid schedule");
 
-                var appointmentCount = await _dapper.QueryFirstOrDefaultAsync<int>(AppoinmentQuery.CountBySchedule, new { ScheduleId = scheduleId });
+                var appointmentCount = await _dapper.QueryFirstOrDefaultAsync<int>(AppointmentQuery.CountBySchedule,
+                    new { ScheduleId = scheduleId });
 
                 if (appointmentCount >= schedule.MaxPatients)
                     return Result<AppoinmentResModel>.ValidationError("This schedule is already full");
@@ -133,7 +139,7 @@ namespace HCAS.Domain.Features.Appoinment
                     Status = "Pending"
                 };
 
-                var newId = await _dapper.QueryFirstOrDefaultAsync<int>(AppoinmentQuery.Insert, parameters);
+                var newId = await _dapper.QueryFirstOrDefaultAsync<int>(AppointmentQuery.Insert, parameters);
 
                 var result = new AppoinmentResModel
                 {
@@ -164,7 +170,8 @@ namespace HCAS.Domain.Features.Appoinment
                 if (string.IsNullOrWhiteSpace(newStatus))
                     return Result<AppoinmentResModel>.ValidationError("Invalid status");
 
-                var res = await _dapper.ExecuteAsync(AppoinmentQuery.UpdateStatus, new { AppointmentId = appointmentId, NewStatus = newStatus });
+                var res = await _dapper.ExecuteAsync(AppointmentQuery.UpdateStatus,
+                    new { AppointmentId = appointmentId, NewStatus = newStatus });
 
                 if (res != 1)
                     return Result<AppoinmentResModel>.SystemError("Failed to update appointment");
@@ -187,12 +194,13 @@ namespace HCAS.Domain.Features.Appoinment
         {
             try
             {
-                var res = await _dapper.ExecuteAsync(AppoinmentQuery.Delete, new { AppointmentId = appointmentId });
+                var res = await _dapper.ExecuteAsync(AppointmentQuery.Delete, new { AppointmentId = appointmentId });
 
                 if (res != 1)
                     return Result<AppoinmentResModel>.ValidationError("Failed to delete appointment");
 
-                return Result<AppoinmentResModel>.Success(new AppoinmentResModel { Id = appointmentId }, "Appointment deleted successfully");
+                return Result<AppoinmentResModel>.Success(new AppoinmentResModel { Id = appointmentId },
+                    "Appointment deleted successfully");
             }
             catch (Exception ex)
             {
