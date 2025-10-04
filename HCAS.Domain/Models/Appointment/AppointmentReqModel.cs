@@ -1,13 +1,6 @@
-﻿using HCAS.Database.AppDbContextModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HCAS.Domain.Models.Appoinment
+﻿namespace HCAS.Domain.Models.Appointment
 {
-    public class AppoimentReqModel
+    public class AppointmentReqModel
     {
      //  public int Id { get; set; }
 

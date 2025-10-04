@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HCAS.Database.AppDbContextModels;
+using HCAS.Domain.Features.Doctors;
+using Microsoft.EntityFrameworkCore;
 
 namespace HCAS.Domain.Features.DoctorSchedule;
 
@@ -46,13 +49,16 @@ public static class DoctorScheduleQuery
         GROUP BY ds.Id, d.Name, ds.ScheduleDate, ds.MaxPatients, s.Name
         ORDER BY ds.ScheduleDate";
 }
+
 public class DoctorScheduleService
 {
     private readonly DapperService _dapper;
+    private readonly AppDbContext _appDbContext;
 
-    public DoctorScheduleService(DapperService dapperService)
+    public DoctorScheduleService(DapperService dapperService, AppDbContext appDbContext)
     {
         _dapper = dapperService;
+        _appDbContext = appDbContext;
     }
 
     public async Task<Result<DoctorScheduleResModel>> CreateSchedule(DoctorScheduleReqModel dto)
@@ -147,7 +153,8 @@ public class DoctorScheduleService
             if (res != 1)
                 return Result<DoctorScheduleResModel>.ValidationError("Failed to delete schedule");
 
-            return Result<DoctorScheduleResModel>.Success(new DoctorScheduleResModel { Id = id }, "Schedule deleted successfully");
+            return Result<DoctorScheduleResModel>.Success(new DoctorScheduleResModel { Id = id },
+                "Schedule deleted successfully");
         }
         catch (Exception ex)
         {
@@ -167,7 +174,73 @@ public class DoctorScheduleService
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<DoctorScheduleResModel>>.SystemError($"Error retrieving available schedules: {ex.Message}");
+            return Result<IEnumerable<DoctorScheduleResModel>>.SystemError(
+                $"Error retrieving available schedules: {ex.Message}");
+        }
+    }
+
+    public async Task<Result<PagedResult<DoctorScheduleResponseModel>>> GetDoctorSchedulesAsync(
+        int page = 1, int pageSize = 10,
+        string? doctorName = null, string? specialization = null, DateTime? scheduleDate = null)
+    {
+        try
+        {
+            var query = _appDbContext.DoctorSchedules
+                .Include(ds => ds.Doctor)
+                .ThenInclude(d => d.Specialization)
+                .Where(ds => ds.ScheduleDate > DateTime.Now)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(doctorName))
+            {
+                query = query.Where(ds => ds.Doctor != null 
+                                          && ds.Doctor.Name.Contains(doctorName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(specialization))
+            {
+                query = query.Where(ds => ds.Doctor != null 
+                                          && ds.Doctor.Specialization.Name.Contains(specialization));
+            }
+
+            if (scheduleDate.HasValue)
+            {
+                query = query.Where(ds => ds.ScheduleDate.HasValue
+                                          && ds.ScheduleDate.Value.Date == scheduleDate.Value.Date);
+            }
+
+            var total = await query.CountAsync();
+
+            var schedules = await query
+                .OrderBy(ds => ds.ScheduleDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(ds => new DoctorScheduleResponseModel
+                {
+                    Id = ds.Id,
+                    DoctorId = ds.DoctorId,
+                    DoctorName = ds.Doctor!.Name,
+                    Specialization = ds.Doctor.Specialization.Name,
+                    ScheduleDate = ds.ScheduleDate,
+                    MaxPatients = ds.MaxPatients,
+                    AppointmentCount = ds.Appointments.Count(),
+                    AvailableSlots = ds.MaxPatients - ds.Appointments.Count(a => a.Status != "Cancelled")
+                })
+                .ToListAsync();
+
+            var pagedResult = new PagedResult<DoctorScheduleResponseModel>
+            {
+                Items = schedules,
+                TotalCount = total
+            };
+
+            return schedules.Any()
+                ? Result<PagedResult<DoctorScheduleResponseModel>>.Success(pagedResult)
+                : Result<PagedResult<DoctorScheduleResponseModel>>.NotFound("No schedules found");
+        }
+        catch (Exception ex)
+        {
+            return Result<PagedResult<DoctorScheduleResponseModel>>.SystemError(ex.Message);
         }
     }
 }

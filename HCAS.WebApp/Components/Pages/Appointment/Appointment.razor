@@ -1,0 +1,76 @@
+﻿@page "/Appointment"
+@inject AppointmentService _appointmentService
+@inject IDialogService DialogService
+@using Variant = MudBlazor.Variant
+@using HCAS.Domain.Features.Appointment
+
+<PageTitle>Appointment</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Current Appointments</MudText>
+
+    <div class="d-flex align-items-center mb-2">
+        <RadzenTextBox @bind-Value="@doctorName"
+                       Placeholder="Search by Doctor..."
+                       Style="width:200px;"
+                       Change="OnDoctorNameSearchChanged"/>
+
+        <RadzenTextBox @bind-Value="@patientName"
+                       Placeholder="Search by Patient..."
+                       Style="width:200px;"
+                       Change="OnPatientNameSearchChanged"/>
+        <MudSpacer/>
+        @*<RadzenDropDown Data="@specializations"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        @bind-Value="selectedSpecialization"
+                        Placeholder="Specialization"
+                        Style="width:200px; margin-left:10px;"
+                        Change="OnFilterChanged"/>*@
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="NavigateToCreateAppointment"
+                   Style="margin-left:10px;"
+                   Disabled="@isNavigating">
+            
+            @if (isNavigating)
+            {
+                <MudProgressCircular Color="Color.Success" Size="Size.Small" Indeterminate="true"/>
+                <MudText Style="margin-left: 8px;">Redirecting...</MudText>
+            }
+            else
+            {
+                <MudText>Create Appointment</MudText>
+            }
+        </MudButton>
+    </div>
+
+    <MudTable Items="appointmentLst"
+              Hover="true"
+              Bordered="true">
+        <HeaderContent>
+            <MudTh>Sr No</MudTh>
+            <MudTh>Doctor Name</MudTh>
+            <MudTh>Patient Name</MudTh>
+            <MudTh>Appointment Date</MudTh>
+            <MudTh>Appointment Number</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Sr No">@((page - 1) * pageSize + appointmentLst.IndexOf(context) + 1)</MudTd>
+            <MudTd DataLabel="Doctor Name">@context.DoctorName</MudTd>
+            <MudTd DataLabel="Patient Name">@context.PatientName</MudTd>
+            <MudTd DataLabel="Appointment Date">@context.AppointmentDate.ToString("MMM dd, yyyy")</MudTd>
+            <MudTd DataLabel="Appointment Number">@context.AppointmentNumber</MudTd>
+            <MudTd DataLabel="Status">@context.Status</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPagination Rectangular="true"
+                   Variant="MudBlazor.Variant.Outlined"
+                   SelectedChanged="PageChanged"
+                   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+                   Class="pa-4"
+                   Selected="page"/>
+</MudPaper>

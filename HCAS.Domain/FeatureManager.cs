@@ -1,5 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Features.Appoinment;
+using HCAS.Domain.Features.Appointment;
 using HCAS.Domain.Features.Doctors;
 using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Domain.Features.Patient;

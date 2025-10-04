@@ -1,0 +1,142 @@
+﻿@page "/create-appointment"
+@inject DoctorScheduleService _doctorScheduleService
+@inject PatientService _patientService
+@inject AppointmentService _appointmentService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using HCAS.Domain.Features.DoctorSchedule
+@using HCAS.Domain.Features.Patient
+@using HCAS.Domain.Models.DoctorSchedule
+@using HCAS.Domain.Models.Patient
+@using Variant = MudBlazor.Variant
+@using HCAS.Domain.Features.Appointment
+
+<style>
+    .selected-row {
+        background-color: #1E88E5 !important;
+    }
+    .selected-row > td {
+        color: white !important;
+    }
+    .disabled-row {
+        opacity: 0.6;
+        background-color: #f5f5f5 !important;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+<PageTitle>Create Appointment</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Available Doctor Schedules for Appointment</MudText>
+
+    <div class="d-flex mb-2">
+        <RadzenDropDown Data="@patientList"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        @bind-Value="@selectedPatientId"
+                        Placeholder="Select Patient"
+                        Style="width:200px; margin-left:10px;"
+                        Change="OnPatientSelectionChanged"/>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="CreateAppointmentForPatient"
+                   Style="margin-left:10px;"
+                   Disabled="@(!IsCreateButtonEnabled || isCreating)">
+            @if (isCreating)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+                <MudText Style="margin-left: 8px;">Creating...</MudText>
+            }
+            else
+            {
+                <MudText>Create Appointment</MudText>
+            }
+        </MudButton>
+    </div>
+
+    @if (!string.IsNullOrEmpty(selectedPatientName))
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-3">
+            <MudAlertTitle>Selected Patient: @selectedPatientName</MudAlertTitle>
+        </MudAlert>
+    }
+
+    @if (selectedScheduleId.HasValue)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-3">
+            <MudAlertTitle>Selected Schedule ID: @selectedScheduleId</MudAlertTitle>
+        </MudAlert>
+    }
+
+    <MudTable T="DoctorScheduleResponseModel"
+              Items="scheduleLst"
+              Hover="true"
+              Bordered="true"
+              @ref="mudTable"
+              RowClass="cursor-pointer"
+              RowClassFunc="GetRowClass"
+              OnRowClick="HandleRowClick">
+        <HeaderContent>
+            <MudTh>Sr No</MudTh>
+            <MudTh>Doctor</MudTh>
+            <MudTh>Specializations</MudTh>
+            <MudTh>Date & Time</MudTh>
+            <MudTh>Maximum Patients</MudTh>
+            <MudTh>Booked</MudTh>
+            <MudTh>Available</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Sr No">@((page - 1) * pageSize + scheduleLst.IndexOf(context) + 1)</MudTd>
+            <MudTd DataLabel="Doctor">@context.DoctorName</MudTd>
+            <MudTd DataLabel="Specializations">@context.Specialization</MudTd>
+            <MudTd DataLabel="Date & Time">@context.ScheduleDate</MudTd>
+            <MudTd DataLabel="Maximum Patients">@context.MaxPatients</MudTd>
+            <MudTd DataLabel="Booked">@context.AppointmentCount</MudTd>
+            <MudTd DataLabel="Available">
+                @if (context.AvailableSlots <= 0)
+                {
+                    <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small">Full</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">
+                        @context.AvailableSlots
+                    </MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Status">
+                @if (selectedScheduleId == context.Id)
+                {
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                        SELECTED
+                    </MudChip>
+                }
+                else if (context.AvailableSlots <= 0)
+                {
+                    <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small">
+                        UNAVAILABLE
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">
+                        AVAILABLE
+                    </MudChip>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPagination Rectangular="true"
+                   Variant="MudBlazor.Variant.Outlined"
+                   SelectedChanged="PageChanged"
+                   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+                   Class="pa-4"
+                   Selected="page"/>
+</MudPaper>
