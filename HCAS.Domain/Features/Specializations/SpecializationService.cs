@@ -1,5 +1,6 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Models.Specialization;
+using HCAS.Domain.Features.Models.Specialization;
+using HCAS.Domain.Models;
 using HCAS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;

@@ -4,7 +4,6 @@ using HCAS.Domain.Features.Doctors;
 using HCAS.Domain.Features.Specializations;
 using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Domain.Features.Patient;
-using HCAS.Domain.Features.Specialization;
 using HCAS.Domain.Features.Staff;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;

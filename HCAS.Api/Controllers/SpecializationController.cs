@@ -1,9 +1,6 @@
 ﻿using HCAS.Domain.Features.Specializations;
-using HCAS.Domain.Features.Model.Specialization;
-using HCAS.Shared;
-using Microsoft.AspNetCore.Http;
+using HCAS.Domain.Features.Models.Specialization;
 using Microsoft.AspNetCore.Mvc;
-using HCAS.Domain.Models.Specialization;
 
 namespace HCAS.Api.Controllers
 {
@@ -26,7 +23,7 @@ namespace HCAS.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RegisterSpecialization(SpecializationResModel dto)
+        public async Task<IActionResult> RegisterSpecialization(SpecializationReqModel dto)
         {
             var registerSpecialization = await _specializationSerivce.RegisterSpecializationAsync(dto);
             return Ok(registerSpecialization.Data);
