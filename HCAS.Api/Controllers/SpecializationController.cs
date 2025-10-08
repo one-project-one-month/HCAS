@@ -1,4 +1,5 @@
-﻿using HCAS.Domain.Features.Specialization;
+﻿using HCAS.Domain.Features.Specializations;
+using HCAS.Domain.Features.Model.Specialization;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,28 +21,28 @@ namespace HCAS.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSpecializationList()
         {
-            var specializationList = await _specializationSerivce.GetAllSpecializationList();
+            var specializationList = await _specializationSerivce.GetSpecializationAsync();
             return Ok(specializationList.Data);
         }
 
         [HttpPost]
         public async Task<IActionResult> RegisterSpecialization(SpecializationResModel dto)
         {
-            var registerSpecialization = await _specializationSerivce.RegisterSpecializations(dto);
+            var registerSpecialization = await _specializationSerivce.RegisterSpecializationAsync(dto);
             return Ok(registerSpecialization.Data);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateSpecialization(SpecializationReqModel dto, int id)
+        public async Task<IActionResult> UpdateSpecialization(int id,SpecializationReqModel dto)
         {
-            var updateSpecialization = await _specializationSerivce.UpdateSpecializations(dto,id);
+            var updateSpecialization = await _specializationSerivce.UpdateSpecializationAsync(id,dto);
             return Ok(updateSpecialization.Data);
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteSpecialization(int id)
         {
-            var deleteSpecialization = await _specializationSerivce.DeleteSpecializations(id);
+            var deleteSpecialization = await _specializationSerivce.DeleteSpecializationAsync(id);
             return Ok(deleteSpecialization.Data);
         }
     }

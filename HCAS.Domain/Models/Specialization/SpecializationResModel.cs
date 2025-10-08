@@ -10,6 +10,6 @@ namespace HCAS.Domain.Models.Specialization
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;       
-        public bool del_flg { get; set; }
+        public bool DelFlg { get; set; }
     }
 }

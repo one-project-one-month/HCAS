@@ -1,0 +1,85 @@
+﻿@using HCAS.Domain.Features.Specializations
+@using HCAS.Domain.Features.Model.Specialization
+@using MudBlazor
+@inject SpecializationService specializationService
+
+<MudDialog Style="height: 400px; width: 400px;">
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Specialization" : "Add Specialization")</MudText>
+
+            <MudTextField @bind-Value="specializationModel.Name" Label="Name" Required="true" />
+
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <!-- Parameterless methods match MudButton.OnClick -->
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public SpecializationResModel? Specialization { get; set; }
+
+    private SpecializationReqModel specializationModel = new();   
+    private bool _loading = false;
+    private bool _isEdit => Specialization is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+
+        if (_isEdit && Specialization is not null)
+        {
+            specializationModel = new SpecializationReqModel
+            {
+                Name = Specialization.Name,              
+            };
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(specializationModel.Name))
+            return;
+
+        _loading = true;
+
+        Result<SpecializationResModel> result;
+        if (_isEdit && Specialization is not null)
+        {
+            result = await specializationService.UpdateSpecializationAsync(Specialization.Id, specializationModel);
+        }
+        else
+        {
+            result = await specializationService.RegisterSpecializationAsync(specializationModel);
+        }
+
+        _loading = false;
+
+        if (result.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(true)); 
+        }
+        else
+        {        
+            MudDialog.Cancel(); 
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
