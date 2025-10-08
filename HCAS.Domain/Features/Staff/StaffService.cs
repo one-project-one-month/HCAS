@@ -1,25 +1,58 @@
-﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Features.Model.Staff;
+﻿using HCAS.Domain.Features.Model.Staff;
 using HCAS.Shared;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Staff
 {
+    public static class StaffQuery
+    {
+        public const string Insert = @"
+            INSERT INTO Staff (Name, Email, Phone, Role, Username, Password, del_flg)
+            VALUES (@Name, @Email, @Phone, @Role, @Username, @Password, 0)";
+
+        public const string ExistsById = "SELECT COUNT(1) FROM Staff WHERE Id = @Id AND del_flg = 0";
+
+        public const string Update = @"
+            UPDATE Staff
+            SET Name = @Name,
+                Email = @Email,
+                Phone = @Phone,
+                Role = @Role,
+                Username = @Username,
+                Password = @Password
+            WHERE Id = @Id AND del_flg = 0";
+
+        public const string SoftDelete = "UPDATE Staff SET del_flg = 1 WHERE Id = @Id AND del_flg = 0";
+
+        public const string GetAllPaged = @"
+            SELECT Id, Name, Email, Phone, Role, Username
+            FROM Staff
+            WHERE del_flg = 0
+            {0}
+            ORDER BY Id DESC
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+        public const string CountAll = @"
+            SELECT COUNT(*)
+            FROM Staff
+            WHERE del_flg = 0
+            {0}";
+    }
+
+    public class PagedResult<T>
+    {
+        public IEnumerable<T> Items { get; set; } = new List<T>();
+        public int TotalCount { get; set; }
+    }
+
     public class StaffService
     {
-        private readonly DapperService _dapperService;
+        private readonly DapperService _dapper;
 
         public StaffService(DapperService dapperService)
         {
-            _dapperService = dapperService;
+            _dapper = dapperService;
         }
+
         #region GetAllStaffAsync
         public async Task<Result<PagedResult<StaffResModel>>> GetAllStaffAsync(
             int page = 1,
@@ -28,112 +61,63 @@ namespace HCAS.Domain.Features.Staff
         {
             try
             {
-                // Base SQL
-                string baseQuery = "FROM Staff WHERE del_flg = 0";
-                string countQuery = "SELECT COUNT(1) " + baseQuery;
-                string dataQuery = "SELECT Id, Name, Email, Phone, Role, Username " + baseQuery;
-
-                // Add search filter
-                if (!string.IsNullOrEmpty(search))
+                string whereClause = "";
+                var parameters = new Dictionary<string, object>
                 {
-                    baseQuery += " AND (Name LIKE @Search OR Username LIKE @Search)";
-                    countQuery = "SELECT COUNT(1) " + baseQuery;
-                    dataQuery = "SELECT Id, Name, Email, Phone, Role, Username " + baseQuery;
-                }
-
-                // Paging
-                dataQuery += " ORDER BY Id OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-                // Parameters
-                var parameters = new
-                {
-                    Search = $"%{search}%",
-                    Offset = (page - 1) * pageSize,
-                    PageSize = pageSize
+                    {"Offset", (page - 1) * pageSize},
+                    {"PageSize", pageSize}
                 };
 
-                // Query DB
-                var totalCount = await _dapperService.QueryFirstOrDefaultAsync<int>(countQuery, parameters);
-                var staffs = await _dapperService.QueryAsync<StaffResModel>(dataQuery, parameters);
-
-                //if (staffs is null || !staffs.Any())
-                //{
-                //    return Result<PagedResult<StaffResModel>>.SystemError("No staffs found.");
-                //}
-
-                // Wrap result
-                var pagedResult = new PagedResult<StaffResModel>
+                if (!string.IsNullOrWhiteSpace(search))
                 {
-                    Items = staffs ?? Enumerable.Empty<StaffResModel>(),//to avoid NullRefrenceException
+                    whereClause = "AND (Name LIKE @Search OR Username LIKE @Search)";
+                    parameters.Add("Search", $"%{search}%");
+                }
+
+                var query = string.Format(StaffQuery.GetAllPaged, whereClause);
+                var countQuery = string.Format(StaffQuery.CountAll, whereClause);
+
+                var staffList = await _dapper.QueryAsync<StaffResModel>(query, parameters);
+                var totalCount = await _dapper.QueryFirstOrDefaultAsync<int>(countQuery, parameters);
+
+                var result = new PagedResult<StaffResModel>
+                {
+                    Items = staffList ?? Enumerable.Empty<StaffResModel>(),
                     TotalCount = totalCount
                 };
 
-                return Result<PagedResult<StaffResModel>>.Success(
-                    pagedResult,
-                    $"Total Staffs: {pagedResult.TotalCount}");
+                return Result<PagedResult<StaffResModel>>.Success(result, "Staff list retrieved successfully.");
             }
             catch (Exception ex)
             {
-                return Result<PagedResult<StaffResModel>>.SystemError(
-                    "An error occurred while retrieving staffs: " + ex.Message);
+                return Result<PagedResult<StaffResModel>>.SystemError($"Error retrieving staff list: {ex.Message}");
             }
         }
         #endregion
-
 
         #region RegisterStaffAsync
         public async Task<Result<StaffReqModel>> RegisterStaffAsync(StaffReqModel dto)
         {
             try
             {
-                Result<StaffReqModel> ReqModel = new Result<StaffReqModel>();
-
-                if (string.IsNullOrEmpty(dto.Name) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Password))
+                if (string.IsNullOrWhiteSpace(dto.Name) ||
+                    string.IsNullOrWhiteSpace(dto.Email) ||
+                    string.IsNullOrWhiteSpace(dto.Username) ||
+                    string.IsNullOrWhiteSpace(dto.Password))
                 {
-                    ReqModel = Result<StaffReqModel>.ValidationError("Name, Email, Username, and Password are required.");
-                    goto Result;
+                    return Result<StaffReqModel>.ValidationError("Name, Email, Username, and Password are required.");
                 }
-                var query = $@"INSERT INTO [dbo].[Staff]
-                        ([Name]
-                        ,[Email]
-                        ,[Phone]
-                        ,[Role]
-                        ,[Username]
-                        ,[Password]
-                        ,[del_flg])
-                VALUES
-                        (@Name
-                        ,@Email
-                        ,@Phone
-                        ,@Role
-                        ,@Username
-                        ,@Password
-                        ,0
-                        )";
-                var result = new StaffReqModel
-                {
-                    Name = dto.Name,
-                    Email = dto.Email,
-                    Phone = dto.Phone,
-                    Role = dto.Role,
-                    Username = dto.Username,
-                    Password = dto.Password
-                };
 
-                var res = await _dapperService.ExecuteAsync(query, result);
+                var res = await _dapper.ExecuteAsync(StaffQuery.Insert, dto);
 
                 if (res != 1)
-                {
-                    ReqModel = Result<StaffReqModel>.SystemError("Failed to register staff.");
-                    goto Result;
-                }
-                ReqModel = Result<StaffReqModel>.Success(result, "Staff Registered Successfully");
-            Result:
-                return ReqModel;
+                    return Result<StaffReqModel>.SystemError("Failed to register staff.");
+
+                return Result<StaffReqModel>.Success(dto, "Staff registered successfully.");
             }
             catch (Exception ex)
             {
-                return Result<StaffReqModel>.SystemError("An error occurred while registering staff: " + ex.Message);
+                return Result<StaffReqModel>.SystemError($"Error registering staff: {ex.Message}");
             }
         }
         #endregion
@@ -143,49 +127,21 @@ namespace HCAS.Domain.Features.Staff
         {
             try
             {
-                Result<StaffReqModel> ReqModel = new Result<StaffReqModel>();
-                if (dto.Id <= 0)
-                {
-                    ReqModel = Result<StaffReqModel>.ValidationError("Invalid Staff ID.");
-                    goto Result;
-                }
-                var existingStaffQuery = "SELECT COUNT(1) FROM Staff WHERE Id = @Id AND del_flg = 0";
-                if (existingStaffQuery is null)
-                {
-                    Result<StaffReqModel>.ValidationError("Staff not found.");
-                }
-                var updateQuery = $@"UPDATE [dbo].[Staff]
-                        SET [Name] = @Name
-                        ,[Email] = @Email
-                        ,[Phone] = @Phone
-                        ,[Role] = @Role
-                        ,[Username] = @Username
-                        ,[Password] = @Password
-                        WHERE Id = @Id AND del_flg = 0";
+                var exists = await _dapper.QueryFirstOrDefaultAsync<int>(StaffQuery.ExistsById, new { dto.Id });
 
-                var result = new StaffReqModel
-                {
-                    Id = dto.Id,
-                    Name = dto.Name,
-                    Email = dto.Email,
-                    Phone = dto.Phone,
-                    Role = dto.Role,
-                    Username = dto.Username,
-                    Password = dto.Password
-                };
-                var res = await _dapperService.ExecuteAsync(updateQuery, result);
+                if (exists == 0)
+                    return Result<StaffReqModel>.ValidationError("Staff not found.");
+
+                var res = await _dapper.ExecuteAsync(StaffQuery.Update, dto);
+
                 if (res != 1)
-                {
-                    ReqModel = Result<StaffReqModel>.SystemError("Failed to update staff.");
-                    goto Result;
-                }
-                ReqModel = Result<StaffReqModel>.Success(result, "Staff Updated Successfully");
-            Result:
-                return ReqModel;
+                    return Result<StaffReqModel>.SystemError("Failed to update staff.");
+
+                return Result<StaffReqModel>.Success(dto, "Staff updated successfully.");
             }
             catch (Exception ex)
             {
-                return Result<StaffReqModel>.SystemError("An error occurred while updating staff: " + ex.Message);
+                return Result<StaffReqModel>.SystemError($"Error updating staff: {ex.Message}");
             }
         }
         #endregion
@@ -195,73 +151,23 @@ namespace HCAS.Domain.Features.Staff
         {
             try
             {
-                Result<StaffReqModel> ReqModel = new Result<StaffReqModel>();
-                if (id <= 0)
-                {
-                    ReqModel = Result<StaffReqModel>.ValidationError("Invalid Staff ID.");
-                    goto Result;
-                }
+                var exists = await _dapper.QueryFirstOrDefaultAsync<int>(StaffQuery.ExistsById, new { Id = id });
 
-                var exitingStaffQuery = "SELECT COUNT(1) FROM Staff WHERE Id = @Id AND del_flg = 0";
-                var exitingCount = await _dapperService.QueryFirstOrDefaultAsync<int>(exitingStaffQuery, new { Id = id });
-                if (exitingCount == 0)
-                {
-                    Result<StaffReqModel>.ValidationError("Staff not found.");
-                }
-                var deleteQuery = $@"UPDATE [dbo].[Staff]
-                        SET del_flg = 1
-                        WHERE Id = @Id AND del_flg = 0";
-                var result = new StaffReqModel
-                {
-                    Id = id
-                };
-                var res = await _dapperService.ExecuteAsync(deleteQuery, result);
+                if (exists == 0)
+                    return Result<StaffReqModel>.ValidationError("Staff not found.");
+
+                var res = await _dapper.ExecuteAsync(StaffQuery.SoftDelete, new { Id = id });
+
                 if (res != 1)
-                {
-                    ReqModel = Result<StaffReqModel>.SystemError("Failed to delete staff.");
-                    goto Result;
-                }
-                ReqModel = Result<StaffReqModel>.DeleteSuccess("Staff Deleted Successfully");
-            Result:
-                return ReqModel;
+                    return Result<StaffReqModel>.SystemError("Failed to delete staff.");
+
+                return Result<StaffReqModel>.DeleteSuccess("Staff deleted successfully.");
             }
             catch (Exception ex)
             {
-                return Result<StaffReqModel>.SystemError("An error occurred while deleting staff: " + ex.Message);
+                return Result<StaffReqModel>.SystemError($"Error deleting staff: {ex.Message}");
             }
         }
         #endregion
-
     }
-
 }
-
-
-
-//GetAllStaffAsync without pagaination
-//public async Task<Result<IEnumerable<StaffResModel>>> GetAllStaffAsync()
-//{
-//    try
-//    {
-
-//        Result<IEnumerable<StaffResModel>> ResModel = new Result<IEnumerable<StaffResModel>>();
-
-//        string query = "SELECT Id, Name, Email, Phone, Role, Username FROM Staff WHERE del_flg = 0";
-
-//        var staffs = await Task.Run(() => _dapperServiceService.Query<StaffResModel>(query));
-
-//        if (staffs is null)
-//        {
-//            ResModel = Result<IEnumerable<StaffResModel>>.SystemError("No staffs found.");
-//            goto Result;
-//        }
-//        ResModel = Result<IEnumerable<StaffResModel>>.Success(staffs, "staffs found.");
-
-//    Result:
-//        return ResModel;
-//    }
-//    catch (Exception ex)
-//    {
-//        return Result<IEnumerable<StaffResModel>>.SystemError("An error occurred while retrieving staffs: " + ex.Message);
-//    }
-//}
