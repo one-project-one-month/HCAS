@@ -21,7 +21,7 @@ namespace HCAS.Api.Controllers
         public async Task<IActionResult> GetSpecializationList()
         {
             var specializationList = await _specializationSerivce.GetSpecializationAsync();
-            return Execute(specializationList.Data);
+            return Ok(specializationList.Data);
         }
 
         [HttpPost]
