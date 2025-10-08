@@ -10,7 +10,7 @@ namespace HCAS.Domain.Models.Patient
     {
         public string Name { get; set; }
 
-        public DateTime DateOfBirth { get; set; }
+        public DateTime? DateOfBirth { get; set; }
 
         public string Gender { get; set; }
 

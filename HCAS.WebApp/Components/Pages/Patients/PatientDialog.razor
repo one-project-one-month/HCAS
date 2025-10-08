@@ -1,0 +1,118 @@
+﻿@using HCAS.Domain.Features.Patient
+@using HCAS.Domain.Models.Patient
+@using HCAS.Shared
+@using MudBlazor
+@inject PatientService PatientService
+
+<MudDialog Style="height: 500px; width: 400px;">
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "Edit Patient" : "Add Patient")</MudText>
+
+            <MudTextField @bind-Value="patientModel.Name" Label="Name" Required="true" Class="mb-2" />
+
+            <MudDatePicker @bind-Date="patientModel.DateOfBirth"
+                           Label="Date of Birth"
+                           Required="true"
+                           Class="mb-2" />
+
+            <MudSelect T="string"
+                       Label="Gender"
+                       @bind-Value="patientModel.Gender"
+                       Required="true"
+                       Class="mb-2">
+                @foreach (var gender in Genders)
+                {
+                    <MudSelectItem Value="@gender">@gender</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField @bind-Value="patientModel.Phone" Label="Phone" Class="mb-2" />
+
+            <MudTextField @bind-Value="patientModel.Email" Label="Email" Class="mb-2" />
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="SavePatient">Save</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public PatientResModel? Patient { get; set; }
+
+    private PatientReqModel patientModel = new();
+    private bool _loading = false;
+    private bool _isEdit => Patient is not null;
+
+    private readonly List<string> Genders = new() { "Male", "Female", "Other" };
+
+    protected override void OnInitialized()
+    {
+        _loading = true;
+
+        if (_isEdit && Patient is not null)
+        {
+            patientModel = new PatientReqModel
+                {
+                    Name = Patient.Name,
+                    DateOfBirth = Patient.DateOfBirth,
+                    Gender = Patient.Gender,
+                    Phone = Patient.Phone,
+                    Email = Patient.Email
+                };
+        }
+
+        _loading = false;
+    }
+
+    private async Task SavePatient()
+    {
+        if (string.IsNullOrWhiteSpace(patientModel.Name) || string.IsNullOrWhiteSpace(patientModel.Gender))
+            return;
+
+        _loading = true;
+        Result<PatientResModel> result;
+
+        if (_isEdit && Patient is not null)
+        {
+            result = await PatientService.UpdatePatient(patientModel, Patient.Id);
+        }
+        else
+        {
+            var createResult = await PatientService.RegisterPatient(patientModel);
+
+            result = createResult.IsSuccess
+                ? new Result<PatientResModel>
+                    {
+                        IsSuccess = true,
+                        Data = new PatientResModel
+                        {
+                            Name = patientModel.Name,
+                            DateOfBirth = (DateTime)patientModel.DateOfBirth,
+                            Gender = patientModel.Gender,
+                            Phone = patientModel.Phone,
+                            Email = patientModel.Email
+                        }
+                    }
+                : new Result<PatientResModel> { IsSuccess = false };
+        }
+
+        _loading = false;
+
+        if (result.IsSuccess)
+            MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

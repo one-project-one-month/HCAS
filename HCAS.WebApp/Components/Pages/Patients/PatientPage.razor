@@ -1,0 +1,152 @@
+﻿@page "/Patient"
+@inject PatientService patientService
+@inject IDialogService DialogService
+@using HCAS.Domain.Features.Patient
+@using HCAS.Domain.Models.Patient
+@using HCAS.Shared
+@using MudBlazor
+@using Radzen.Blazor
+
+<PageTitle>Patients</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Patients</MudText>
+
+    <div class="d-flex mb-2">
+        <RadzenTextBox @bind-Value="searchTerm"
+                       Placeholder="Search by name..."
+                       Style="width:200px;"
+                       Change="OnSearchChanged" />
+
+        <MudButton Variant="MudBlazor.Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="ShowAddDialog"
+                   Style="margin-left:10px;">
+            Add Patient
+        </MudButton>
+    </div>
+
+    <MudTable Items="pagedPatients"
+              Hover="true"
+              Bordered="true">
+        <HeaderContent>
+            <MudTh>Actions</MudTh>
+            <MudTh>No.</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Date of Birth</MudTh>
+            <MudTh>Gender</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Email</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Variant="MudBlazor.Variant.Outlined"
+                               Color="Color.Primary"
+                               OnClick="@(() => ShowEditDialog(context))"
+                               Size="Size.Small" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Variant="MudBlazor.Variant.Outlined"
+                               Color="Color.Error"
+                               OnClick="@(() => DeletePatient(context))"
+                               Size="Size.Small" />
+            </MudTd>
+            <MudTd>@((page - 1) * pageSize + pagedPatients.IndexOf(context) + 1)</MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.DateOfBirth.ToString("yyyy-MM-dd")</MudTd>
+            <MudTd>@context.Gender</MudTd>
+            <MudTd>@context.Phone</MudTd>
+            <MudTd>@context.Email</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPagination Rectangular="true"
+                   Variant="MudBlazor.Variant.Outlined"
+                   SelectedChanged="PageChanged"
+                   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+                   Class="pa-4"
+                   Selected="page" />
+</MudPaper>
+
+@code {
+    List<PatientResModel> pagedPatients = new();
+    int page = 1;
+    int pageSize = 10;
+    int totalCount = 0;
+    string searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+
+    async Task LoadPatients()
+    {
+        var result = await patientService.GetAllPatient();
+        if (result.IsSuccess)
+        {
+            var allPatients = result.Data;
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+                allPatients = allPatients
+                    .Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            totalCount = allPatients.Count;
+            pagedPatients = allPatients
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+        else
+        {
+            pagedPatients = new();
+            totalCount = 0;
+        }
+        StateHasChanged();
+    }
+
+    void PageChanged(int newPage)
+    {
+        page = newPage;
+        _ = LoadPatients();
+    }
+
+    void OnSearchChanged(object value)
+    {
+        searchTerm = value?.ToString() ?? string.Empty;
+        page = 1;
+        _ = LoadPatients();
+    }
+
+    async Task ShowAddDialog()
+    {
+        var dialog = await DialogService.ShowAsync<PatientDialog>();
+        await dialog.Result;
+        await LoadPatients();
+    }
+
+    async Task ShowEditDialog(PatientResModel patient)
+    {
+        var parameters = new DialogParameters { { "Patient", patient } };
+        var dialog = await DialogService.ShowAsync<PatientDialog>(null, parameters);
+
+        if (!dialog.Result.IsCanceled)
+            await LoadPatients();
+    }
+
+    async Task DeletePatient(PatientResModel patient)
+    {
+        bool confirmed = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Are you sure you want to delete patient {patient.Name}?",
+            yesText: "Delete", cancelText: "Cancel"
+        ) ?? false;
+
+        if (!confirmed) return;
+
+        var result = await patientService.DeletePatient(patient.Id);
+        if (result.IsSuccess)
+            await LoadPatients();
+    }
+}
