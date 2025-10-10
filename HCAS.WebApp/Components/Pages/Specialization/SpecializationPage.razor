@@ -1,0 +1,163 @@
+﻿@page "/Specialization"
+@inject SpecializationService specializationService
+@inject IDialogService DialogService
+@inject InjectService InjectService
+
+@using HCAS.Domain.Features.Models.Specialization
+@using HCAS.Domain.Features.Specializations
+@using HCAS.WebApp.Components.Common
+@using HCAS.WebApp.Services
+@using MudBlazor
+@using Radzen.Blazor
+@using static HCAS.WebApp.Components.Pages.Specialization.SpecializationDialog
+
+<PageTitle>Specializations</PageTitle>
+
+<MudPaper Class="pa-4">
+	<MudText Typo="Typo.h5">Specializations</MudText>
+
+	<div class="d-flex mb-2">
+		<RadzenTextBox @bind-Value="searchTerm"
+					   Placeholder="Search by name..."
+					   Style="width:200px;"
+					   Change="OnSearchChanged" />		
+
+		<MudButton Variant="MudBlazor.Variant.Filled"
+				   Color="Color.Primary"
+				   OnClick="ShowAddDialog"
+				   Style="margin-left:10px;">
+			Add Specialization
+		</MudButton>
+	</div>
+
+	<MudTable Items="pagedSpecializations"
+			  Hover="true"
+			  Bordered="true">
+		<HeaderContent>
+			<MudTh>Actions</MudTh>
+			<MudTh>No.</MudTh>
+			<MudTh>Name</MudTh>		
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd DataLabel="Actions">
+				<MudIconButton Icon="@Icons.Material.Filled.Edit"
+							   Variant="MudBlazor.Variant.Outlined"
+							   Color="Color.Primary"
+							   OnClick="@(() => ShowEditDialog(context))"
+							   Size="Size.Small" />
+				<MudIconButton Icon="@Icons.Material.Filled.Delete"
+							   Variant="MudBlazor.Variant.Outlined"
+							   Color="Color.Error"
+							   OnClick="@(() => DeleteSpecialization(context.Id))"
+							   Size="Size.Small" />
+			</MudTd>
+			<MudTd DataLabel="No.">@((page - 1) * pageSize + @pagedSpecializations.IndexOf(context) + 1)</MudTd>
+			<MudTd DataLabel="Name">@context.Name</MudTd>
+		</RowTemplate>
+	</MudTable>
+
+	<MudPagination Rectangular="true"
+				   Variant="MudBlazor.Variant.Outlined"
+				   SelectedChanged="PageChanged"
+				   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+				   Class="pa-4"
+				   Selected="page" />
+</MudPaper>
+
+@code {
+	List<SpecializationResModel> pagedSpecializations = new();	
+
+	int page = 1;
+	int pageSize = 10;
+	int totalCount = 0;
+	string searchTerm = string.Empty;
+
+	protected override async Task OnInitializedAsync()
+	{		
+		await LoadSpecialization();
+	}
+
+	async Task LoadSpecialization()
+	{
+		var result = await specializationService.GetSpecializationAsync(page, pageSize, searchTerm);
+
+		if (result.IsSuccess)
+		{
+			pagedSpecializations = result.Data.Items.ToList();
+			totalCount = result.Data.TotalCount;
+		}
+		else
+		{
+			pagedSpecializations = new();
+			totalCount = 0;
+		}
+		StateHasChanged();
+	}
+
+	void PageChanged(int newPage)
+	{
+		page = newPage;
+		_ = LoadSpecialization();
+	}
+
+	void OnSearchChanged(object value)
+	{
+		searchTerm = value?.ToString() ?? string.Empty;
+		page = 1;
+		_ = LoadSpecialization();
+	}
+
+	async Task ShowAddDialog()
+	{
+		var dialog = await DialogService.ShowAsync<SpecializationDialog>();
+		await dialog.Result;
+		await LoadSpecialization();
+	}
+
+	async Task ShowEditDialog(SpecializationResModel Specialization)
+	{
+		try
+		{
+			var parameters = new DialogParameters { { "Specialization", Specialization } };
+			var dialog = await DialogService.ShowAsync<SpecializationDialog>(null, parameters);
+
+			if (!dialog.Result.IsCanceled)
+			{
+				await LoadSpecialization();
+			}
+			await LoadSpecialization();				
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error: {ex.Message}");
+		}
+	}
+
+	private async Task DeleteSpecialization(int id)
+	{
+		var Specialization = pagedSpecializations.FirstOrDefault(d => d.Id == id);
+		if (Specialization == null) return;
+
+		bool confirmed = await DialogService.ShowMessageBox(
+			"Confirm Delete",
+			$"Are you sure you want to delete Specialization: {Specialization.Name}?",
+			yesText: "Delete", cancelText: "Cancel"
+		) ?? false;
+
+		if (!confirmed) return;
+
+		var result = await specializationService.DeleteSpecializationAsync(id);
+		if (result.IsSuccess)
+		{
+			await LoadSpecialization();
+		}
+	}
+
+	private async Task HandleDialogSaved(bool success)
+	{
+		if (success)
+		{
+			await LoadSpecialization();
+		}
+	}
+}

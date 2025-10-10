@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Models.Specialization
+namespace HCAS.Domain.Features.Models.Specialization
 {
     public class SpecializationResModel
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;       
-        public bool del_flg { get; set; }
+        public bool DelFlg { get; set; }
     }
 }

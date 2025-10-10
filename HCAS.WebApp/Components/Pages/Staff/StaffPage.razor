@@ -1,0 +1,154 @@
+﻿@page "/Staff"
+@inject StaffService StaffService
+@inject IDialogService DialogService
+@inject InjectService InjectService
+
+@using HCAS.Domain.Features.Staff
+@using HCAS.Domain.Features.Model.Staff
+@using MudBlazor
+@using Variant = MudBlazor.Variant
+@using HCAS.WebApp.Components.Common
+@using HCAS.WebApp.Services
+@using Radzen.Blazor
+
+<PageTitle>Staff</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Staff</MudText>
+
+    <div class="d-flex mb-2">
+
+        <MudStack Spacing="2">
+            
+            <MudStack Row="true" AlignItems="MudBlazor.AlignItems.Center" Spacing="5">
+                <MudTextField @bind-Value="searchTerm"
+                              Placeholder="Search by name or username..."
+                              Immediate="true"
+                              OnImmediateValueChanged="OnSearchChanged"
+                              Style="width:200px;" />
+                <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="LoadStaff" />
+            </MudStack>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowAddDialog" Style="width:150px;">
+                Add Staff 
+            </MudButton>
+        </MudStack>
+    </div>
+
+    <MudTable Items="pagedStaff" Hover="true" Bordered="true">
+        <HeaderContent>
+            <MudTh>Actions</MudTh>
+            <MudTh>No.</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Role</MudTh>
+            <MudTh>Username</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               Variant="Variant.Outlined"
+                               Size="Size.Small"
+                               OnClick="@(() => ShowEditDialog(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Variant="Variant.Outlined"
+                               Size="Size.Small"
+                               OnClick="@(() => DeleteStaff(context.Id))" />
+            </MudTd>
+            <MudTd>@((page - 1) * pageSize + pagedStaff.IndexOf(context) + 1)</MudTd>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd>@context.Phone</MudTd>
+            <MudTd>@context.Role</MudTd>
+            <MudTd>@context.Username</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPagination Rectangular="true"
+                   Variant="Variant.Outlined"
+                   SelectedChanged="PageChanged"
+                   Count="@(totalCount / pageSize + (totalCount % pageSize > 0 ? 1 : 0))"
+                   Selected="page"
+                   Class="pa-4" />
+</MudPaper>
+
+@code {
+    List<StaffResModel> pagedStaff = new();
+    int page = 1;
+    int pageSize = 5;
+    int totalCount = 0;
+    string searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStaff();
+    }
+
+    public async Task LoadStaff()
+    {
+        var result = await StaffService.GetAllStaffAsync(page, pageSize, searchTerm);
+        if (result.IsSuccess)
+        {
+            pagedStaff = result.Data.Items.ToList();
+            totalCount = result.Data.TotalCount ;
+        }
+        else
+        {
+            pagedStaff = new List<StaffResModel>();
+            totalCount = 0;
+        }
+        StateHasChanged();
+    }
+
+    void PageChanged(int newPage)
+    {
+        page = newPage;
+        _ = LoadStaff();
+    }
+
+    void OnSearchChanged(string value)
+    {
+        searchTerm = value;
+        page = 1;
+        _ = LoadStaff();
+    }
+
+    private async Task ShowAddDialog()
+    {
+        var dialog = await DialogService.ShowAsync<StaffDialog>();
+        await dialog.Result;
+        await LoadStaff();
+    }
+
+    private async Task ShowEditDialog(StaffResModel staff)
+    {
+        var parameters = new DialogParameters { { "Staff", staff } };
+        var dialog = await DialogService.ShowAsync<StaffDialog>(null, parameters);
+        await dialog.Result;
+        await LoadStaff();
+    }
+
+    private async Task DeleteStaff(int id)
+    {
+        var staff = pagedStaff.FirstOrDefault(s => s.Id == id);
+        if (staff == null) return;
+
+        bool confirmed = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Are you sure you want to delete {staff.Name}?",
+            yesText: "Delete",
+            cancelText: "Cancel"
+        ) ?? false;
+
+        if (!confirmed) return;
+
+        var result = await StaffService.DeleteStaffAsync(id);
+        if (result.IsSuccess)
+        {
+            await LoadStaff();
+        }
+    }
+}

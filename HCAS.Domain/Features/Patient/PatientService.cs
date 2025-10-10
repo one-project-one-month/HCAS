@@ -116,7 +116,7 @@ public class PatientService
             {
                 Id = id,
                 Name = dto.Name,
-                DateOfBirth = dto.DateOfBirth,
+                DateOfBirth = (DateTime)dto.DateOfBirth,
                 Gender = dto.Gender,
                 Phone = dto.Phone,
                 Email = dto.Email

@@ -3,6 +3,7 @@
 @inject IDialogService DialogService
 @using HCAS.Domain.Features.Doctors
 @using HCAS.Domain.Models.Doctors
+@using HCAS.Shared
 @using HCAS.WebApp.Components.Common
 @using MudBlazor
 @using Radzen.Blazor
@@ -89,7 +90,7 @@
 
 	async Task LoadDoctors()
 	{
-		var result = await doctorService.GetDoctorsAsync(page, pageSize, searchTerm, selectedSpecialization);
+		Result<PagedResult<DoctorsResModel>>? result = await doctorService.GetDoctorsAsync(page, pageSize, searchTerm, selectedSpecialization);
 		if (result.IsSuccess)
 		{
 			pagedDoctors = result.Data.Items.ToList();
@@ -97,7 +98,7 @@
 		}
 		else
 		{
-			pagedDoctors = new();
+			pagedDoctors = new List<DoctorsResModel>();
 			totalCount = 0;
 		}
 		StateHasChanged();
@@ -105,8 +106,8 @@
 
 	async Task LoadSpecializations()
 	{
-		var result = await doctorService.GetSpecializationsAsync();
-		specializations = result?.ToList() ?? new();
+		IEnumerable<SpecializationModel>? result = await doctorService.GetSpecializationsAsync();
+		specializations = result?.ToList() ?? new List<SpecializationModel>();
 	}
 
 	void PageChanged(int newPage)
@@ -136,15 +137,15 @@
 
 	async Task ShowAddDialog()
 	{
-		var dialog = await DialogService.ShowAsync<DoctorDialog>();
+		IDialogReference? dialog = await DialogService.ShowAsync<DoctorDialog>();
 		await dialog.Result;
 		await LoadDoctors();
 	}
 
 	async Task ShowEditDialog(DoctorsResModel doctor)
 	{
-		var parameters = new DialogParameters { { "Doctor", doctor } };
-		var dialog = await DialogService.ShowAsync<DoctorDialog>(null, parameters);
+		DialogParameters? parameters = new DialogParameters { { "Doctor", doctor } };
+		IDialogReference? dialog = await DialogService.ShowAsync<DoctorDialog>(null, parameters);
 		
 		if (!dialog.Result.IsCanceled) 
 		{
@@ -156,13 +157,13 @@
 
 	private async Task DeleteDoctor(int id)
 	{
-		var doctor = pagedDoctors.FirstOrDefault(d => d.Id == id);
+		DoctorsResModel? doctor = pagedDoctors.FirstOrDefault(d => d.Id == id);
 		if (doctor == null) return;
 
 
 		bool confirmed = await DialogService.ShowMessageBox(
-			"Confirm Delete",
-			$"Are you sure you want to delete Dr. {doctor.Name}?",
+			title: "Confirm Delete",
+			message: $"Are you sure you want to delete Dr. {doctor.Name}?",
 			yesText: "Delete", cancelText: "Cancel"
 		) ?? false;
 

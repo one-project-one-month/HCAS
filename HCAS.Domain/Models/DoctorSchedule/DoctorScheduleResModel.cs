@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace HCAS.Domain.Models.DoctorSchedule
 {
-    public class DoctorScheduleResModel
-    {
-        public int Id { get; set; }
 
+<<<<<<< HEAD
         public int DoctorId { get; set; }
 
         public DateTime ScheduleDate { get; set; }
@@ -30,4 +28,6 @@ namespace HCAS.Domain.Models.DoctorSchedule
         public int AppointmentCount { get; set; }
         public int? AvailableSlots { get; set; }
     }
+=======
+>>>>>>> 3fe08fde475f6bf541b0515d48f7202169bbdc33
 }

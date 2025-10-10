@@ -1,9 +1,9 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Appointment;
 using HCAS.Domain.Features.Doctors;
+using HCAS.Domain.Features.Specializations;
 using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Domain.Features.Patient;
-using HCAS.Domain.Features.Specialization;
 using HCAS.Domain.Features.Staff;
 using HCAS.Shared;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +27,7 @@ namespace HCAS.Domain
             // Register services
             builder.Services.AddTransient<DapperService>();
             builder.Services.AddTransient<DoctorService>();
+            builder.Services.AddTransient<SpecializationService>();
             builder.Services.AddTransient<DoctorScheduleService>();
             builder.Services.AddTransient<SpecializationService>();
             builder.Services.AddTransient<StaffService>();

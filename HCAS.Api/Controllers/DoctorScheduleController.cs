@@ -1,5 +1,6 @@
 ﻿using HCAS.Domain.Features.DoctorSchedule;
 using HCAS.Domain.Models.DoctorSchedule;
+using HCAS.Shared;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +8,7 @@ namespace HCAS.Api.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    public class DoctorScheduleController : ControllerBase
+    public class DoctorScheduleController : BaseController
     {
         private readonly DoctorScheduleService _doctorScheduleService;
 
@@ -16,39 +17,47 @@ namespace HCAS.Api.Controllers
             _doctorScheduleService = doctorScheduleService;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateDoctorSchedule(DoctorScheduleReqModel dto)
+        //POST: api/v1/DoctorSchedule
+        [HttpPost]
+        public async Task<IActionResult> CreateDoctorSchedule([FromBody] DoctorScheduleReqModel dto)
         {
             var result = await _doctorScheduleService.CreateSchedule(dto);
-            return Ok(result);
+            return Excute(result);
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateDoctorSchedule(int id, DoctorScheduleReqModel dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDoctorSchedule(int id, [FromBody] DoctorScheduleReqModel dto)
         {
             var result = await _doctorScheduleService.UpdateSchedule(id, dto);
-            return Ok(result);
+            return Excute(result);
         }
 
-        [HttpGet("get")]
-        public async Task<IActionResult> GetAllSchedules()
+
+        //GET: api/v1/DoctorSchedule
+
+        [HttpGet]
+        public async Task<IActionResult> GetSchedules(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null
+        )
         {
             var result = await _doctorScheduleService.GetAllSchedules();
-            return Ok(result);
+            return Excute(result);
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSchedules(int id)
         {
             var result = await _doctorScheduleService.DeleteSchedule(id);
-            return Ok(result);
+            return Excute(result);
         }
 
         [HttpGet("getAvailable")]
         public async Task<IActionResult> GetAvailableSchedules()
         {
             var result = await _doctorScheduleService.GetAvailableSchedules();
-            return Ok(result);
+            return Excute(result);
         }
     }
 }

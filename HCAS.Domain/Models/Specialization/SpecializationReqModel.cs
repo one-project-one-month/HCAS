@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Domain.Models.Specialization
+namespace HCAS.Domain.Features.Models.Specialization
 {
     public class SpecializationReqModel
     {
