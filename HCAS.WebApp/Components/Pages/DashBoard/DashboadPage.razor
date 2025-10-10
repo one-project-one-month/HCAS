@@ -1,14 +1,85 @@
 ﻿@page "/Dashboard"
-@using HCAS.Domain.Features.Appoinment
+@using HCAS.Domain.Features.Appointment
 @using HCAS.Domain.Features.Patient
 @inject IJSRuntime JS
-@inject AppoinmentService AppointmentService
+@inject AppointmentService AppointmentService
 @inject PatientService PatientService
 
-<div class="dashboard-charts">
-    <div id="appointmentsChart" style="width:100%; height:400px;"></div>
-    <div id="patientsChart" style="width:100%; height:400px; margin-top:40px;"></div>
-</div>
+<MudPaper Class="p-6 rounded-xl shadow-md bg-grey-lighten-4">
+    <MudText Typo="Typo.h4" Class="mb-4 text-center text-primary font-weight-bold">
+        📊 Hospital Dashboard Overview
+    </MudText>
+
+    <MudGrid Spacing="3">
+        <!-- Appointments Overview -->
+        <MudItem xs="12" md="6">
+            <MudPaper Class="p-4 rounded-lg shadow-sm bg-white">
+                <MudText Typo="Typo.h6" Class="mb-3 text-primary">Appointments Over Time</MudText>
+                @if (loadingAppointments)
+                {
+                    <div class="flex justify-center p-4">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </div>
+                }
+                else if (!appointmentDates.Any())
+                {
+                    <div class="text-center p-4 text-secondary">No appointment data available.</div>
+                }
+                else
+                {
+                    <div id="appointmentsChart" style="width:100%; height:350px;"></div>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Patients Overview -->
+        <MudItem xs="12" md="6">
+            <MudPaper Class="p-4 rounded-lg shadow-sm bg-white">
+                <MudText Typo="Typo.h6" Class="mb-3 text-primary">Patients by Gender</MudText>
+                @if (loadingPatients)
+                {
+                    <div class="flex justify-center p-4">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </div>
+                }
+                else if (maleCount == 0 && femaleCount == 0)
+                {
+                    <div class="text-center p-4 text-secondary">No patient data available.</div>
+                }
+                else
+                {
+                    <div id="patientsChart" style="width:100%; height:350px;"></div>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Summary Cards -->
+        <MudItem xs="12">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="4">
+                    <MudCard Class="p-4 text-center shadow-sm hover:shadow-md transition">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">Total Appointments</MudText>
+                        <MudText Typo="Typo.h5" Class="font-weight-bold mt-2">@totalAppointments</MudText>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudCard Class="p-4 text-center shadow-sm hover:shadow-md transition">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">Total Patients</MudText>
+                        <MudText Typo="Typo.h5" Class="font-weight-bold mt-2">@totalPatients</MudText>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudCard Class="p-4 text-center shadow-sm hover:shadow-md transition">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">Female to Male Ratio</MudText>
+                        <MudText Typo="Typo.h5" Class="font-weight-bold mt-2">
+                            @(femaleCount):@(maleCount)
+                        </MudText>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
 
 @code {
     private List<int> appointmentCounts = new();
@@ -16,6 +87,11 @@
 
     private int maleCount = 0;
     private int femaleCount = 0;
+    private int totalAppointments = 0;
+    private int totalPatients = 0;
+
+    private bool loadingAppointments = true;
+    private bool loadingPatients = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -25,24 +101,94 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !loadingAppointments && !loadingPatients)
         {
-            // Appointments over time (Column chart)
+            await RenderCharts();
+        }
+    }
+
+    private async Task LoadAppointmentData()
+    {
+        try
+        {
+            var result = await AppointmentService.GetAllAppointments();
+
+            if (result.IsSuccess && result.Data is not null)
+            {
+                var appointments = result.Data
+                    .Where(a => a.AppointmentDate != null)
+                    .OrderBy(a => a.AppointmentDate)
+                    .ToList();
+
+                totalAppointments = appointments.Count;
+
+                appointmentDates = appointments
+                    .Select(a => a.AppointmentDate!.Value.ToString("MMM dd"))
+                    .Distinct()
+                    .ToList();
+
+                appointmentCounts = appointmentDates
+                    .Select(date => appointments.Count(a => a.AppointmentDate!.Value.ToString("MMM dd") == date))
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading appointments: {ex.Message}");
+        }
+        finally
+        {
+            loadingAppointments = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPatientData()
+    {
+        try
+        {
+            var result = await PatientService.GetAllPatient();
+
+            if (result.IsSuccess && result.Data is not null)
+            {
+                totalPatients = result.Data.Count;
+                maleCount = result.Data.Count(p => p.Gender?.Equals("male", StringComparison.OrdinalIgnoreCase) == true);
+                femaleCount = result.Data.Count(p => p.Gender?.Equals("female", StringComparison.OrdinalIgnoreCase) == true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading patients: {ex.Message}");
+        }
+        finally
+        {
+            loadingPatients = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RenderCharts()
+    {
+        if (appointmentDates.Any())
+        {
             await JS.InvokeVoidAsync("Highcharts.chart", "appointmentsChart", new
             {
-                chart = new { type = "line" },
+                chart = new { type = "line", backgroundColor = "#ffffff" },
                 title = new { text = "Appointments Over Time" },
                 xAxis = new { categories = appointmentDates },
                 yAxis = new { title = new { text = "Appointments" } },
                 series = new[] { new { name = "Appointments", data = appointmentCounts } },
-                colors = new[] { "#2f7ed8" },
-                tooltip = new { shared = true, valueSuffix = " appointments" }
+                colors = new[] { "#1976d2" },
+                tooltip = new { shared = true, valueSuffix = " appointments" },
+                legend = new { enabled = false }
             });
+        }
 
-            // Patients by gender (Pie chart)
+        if (maleCount > 0 || femaleCount > 0)
+        {
             await JS.InvokeVoidAsync("Highcharts.chart", "patientsChart", new
             {
-                chart = new { type = "pie" },
+                chart = new { type = "pie", backgroundColor = "#ffffff" },
                 title = new { text = "Patients by Gender" },
                 series = new[]
                 {
@@ -52,51 +198,26 @@
                         colorByPoint = true,
                         data = new[]
                         {
-                            new { name = "Male", y = maleCount, color = "#1f77b4" },
-                            new { name = "Female", y = femaleCount, color = "#ff69b4" }
+                            new { name = "Male", y = maleCount, color = "#42a5f5" },
+                            new { name = "Female", y = femaleCount, color = "#f06292" }
                         }
                     }
                 },
                 tooltip = new { pointFormat = "{series.name}: <b>{point.y}</b>" },
-                plotOptions = new { pie = new { allowPointSelect = true, cursor = "pointer", dataLabels = new { enabled = true, format = "<b>{point.name}</b>: {point.y}" } } }
+                plotOptions = new
+                {
+                    pie = new
+                    {
+                        allowPointSelect = true,
+                        cursor = "pointer",
+                        dataLabels = new
+                        {
+                            enabled = true,
+                            format = "<b>{point.name}</b>: {point.y}"
+                        }
+                    }
+                }
             });
-        }
-    }
-
-    private async Task LoadAppointmentData()
-    {
-        var result = await AppointmentService.GetAllAppointments();
-
-        if (result.IsSuccess)
-        {
-            var appointments = result.Data.OrderBy(a => a.AppointmentDate).ToList();
-            Console.WriteLine($"Appointments count: {appointments.Count}");
-
-
-            // Get unique dates for x-axis
-            appointmentDates = appointments
-                .Select(a => a.AppointmentDate.ToString("MMM dd"))
-                .Distinct()
-                .ToList();
-
-            // Count appointments per date
-            appointmentCounts = appointmentDates
-                .Select(date => appointments.Count(a => a.AppointmentDate.ToString("MMM dd") == date))
-                .ToList();
-
-            Console.WriteLine($"Dates: {string.Join(",", appointmentDates)}");
-            Console.WriteLine($"Counts: {string.Join(",", appointmentCounts)}");
-        }
-    }
-
-    private async Task LoadPatientData()
-    {
-        var result = await PatientService.GetAllPatient();
-
-        if (result.IsSuccess)
-        {
-            maleCount = result.Data.Count(p => p.Gender.Equals("male", StringComparison.OrdinalIgnoreCase));
-            femaleCount = result.Data.Count(p => p.Gender.Equals("female", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

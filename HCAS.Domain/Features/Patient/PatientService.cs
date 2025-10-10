@@ -5,10 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
-using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Models.Patient;
 using HCAS.Shared;
-using Microsoft.EntityFrameworkCore;
 
 namespace HCAS.Domain.Features.Patient;
 
@@ -37,30 +35,17 @@ public static class PatientQuery
 public class PatientService
 {
     private readonly DapperService _dapper;
-    private readonly AppDbContext _appDbContext;
 
-    public PatientService(DapperService dapperService, AppDbContext appDbContext)
+    public PatientService(DapperService dapperService)
     {
         _dapper = dapperService;
-        _appDbContext = appDbContext;
     }
 
     public async Task<Result<List<PatientResModel>>> GetAllPatient()
     {
         try
         {
-            // var result = await _dapper.QueryAsync<PatientResModel>(PatientQuery.GetAll);
-            var result = await _appDbContext.Patients
-                .Select(p => new PatientResModel
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Email = p.Email,
-                    DateOfBirth = p.DateOfBirth,
-                    Gender = p.Gender,
-                    Phone = p.Phone
-                }).ToListAsync();
-            
+            var result = await _dapper.QueryAsync<PatientResModel>(PatientQuery.GetAll);
             var data = result.ToList();
 
             var message = data.Count == 0 ? "No data found" : "Success";
@@ -76,8 +61,7 @@ public class PatientService
     {
         try
         {
-            var patient =
-                await _dapper.QueryFirstOrDefaultAsync<PatientResModel>(PatientQuery.GetById, new { Id = id });
+            var patient = await _dapper.QueryFirstOrDefaultAsync<PatientResModel>(PatientQuery.GetById, new { Id = id });
 
             if (patient is null)
                 return Result<PatientResModel>.NotFound("Patient not found.");
@@ -154,8 +138,7 @@ public class PatientService
     {
         try
         {
-            var patient =
-                await _dapper.QueryFirstOrDefaultAsync<PatientReqModel>(PatientQuery.GetById, new { Id = id });
+            var patient = await _dapper.QueryFirstOrDefaultAsync<PatientReqModel>(PatientQuery.GetById, new { Id = id });
 
             if (patient is null)
                 return Result<PatientReqModel>.NotFound("Patient not found.");
