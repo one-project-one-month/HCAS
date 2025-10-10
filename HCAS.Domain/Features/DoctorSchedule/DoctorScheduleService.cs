@@ -288,7 +288,6 @@ public class DoctorScheduleService
         }
     }
 
-<<<<<<< HEAD
     public async Task<Result<PagedResult<DoctorScheduleResponseModel>>> GetDoctorSchedulesAsync(
         int page = 1, int pageSize = 10,
         string? doctorName = null, string? specialization = null, DateTime? scheduleDate = null)
@@ -353,8 +352,7 @@ public class DoctorScheduleService
             return Result<PagedResult<DoctorScheduleResponseModel>>.SystemError(ex.Message);
         }
     }
-}
-=======
+
 
     public async Task<Result<DoctorScheduleResModel>> CreateScheduleAsync(DoctorScheduleReqModel dto)
     {
@@ -370,7 +368,4 @@ public class DoctorScheduleService
     {
         return await DeleteSchedule(id);
     }
-
-
 }
->>>>>>> 3fe08fde475f6bf541b0515d48f7202169bbdc33
