@@ -1,0 +1,61 @@
+﻿@using HCAS.Domain.Models.Appointment
+@inject AppointmentService _appointmentService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Change Status for @Appointment.AppointmentNumber</MudText>
+        <MudSelect @bind-Value="selectedStatus" Label="Status" Variant="MudBlazor.Variant.Outlined">
+            @foreach (var status in Enum.GetNames(typeof(EnumAppointmentStatus)))
+            {
+                <MudSelectItem Value="@status">@status</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="SaveStatus" Disabled="@isSaving">Save</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public AppointmentResponseModel Appointment { get; set; } = default!;
+
+    private string selectedStatus = string.Empty;
+    private bool isSaving = false;
+
+    protected override void OnInitialized()
+    {
+        selectedStatus = Appointment.Status;
+    }
+
+    private async Task SaveStatus()
+    {
+        try
+        {
+            isSaving = true;
+            var result = await _appointmentService.UpdateAppointment(Appointment.Id, selectedStatus);
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Status updated successfully.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(result.Message, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

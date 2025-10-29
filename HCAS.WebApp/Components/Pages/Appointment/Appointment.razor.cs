@@ -90,4 +90,32 @@ public partial class Appointment
         page = 1;
         _ = AppointmentList();
     }
+
+    private async Task OpenEditDialog(AppointmentResponseModel appointment)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Appointment", appointment }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditAppointmentDialog>("Edit Appointment Status", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await AppointmentList();
+        }
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Pending" => Color.Warning,
+            "Complete" => Color.Success,
+            "Cancelled" => Color.Error,
+            _ => Color.Default
+        };
+    }
 }

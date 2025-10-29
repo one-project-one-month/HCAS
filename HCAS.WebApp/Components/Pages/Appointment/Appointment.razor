@@ -46,9 +46,7 @@
         </MudButton>
     </div>
 
-    <MudTable Items="appointmentLst"
-              Hover="true"
-              Bordered="true">
+    <MudTable Items="appointmentLst" Hover="true" Bordered="true">
         <HeaderContent>
             <MudTh>Sr No</MudTh>
             <MudTh>Doctor Name</MudTh>
@@ -56,17 +54,31 @@
             <MudTh>Appointment Date</MudTh>
             <MudTh>Appointment Number</MudTh>
             <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
         </HeaderContent>
+
         <RowTemplate>
-            <MudTd DataLabel="Sr No">@((page - 1) * pageSize + appointmentLst.IndexOf(context) + 1)</MudTd>
-            <MudTd DataLabel="Doctor Name">@context.DoctorName</MudTd>
-            <MudTd DataLabel="Patient Name">@context.PatientName</MudTd>
-            <MudTd DataLabel="Appointment Date">@context.AppointmentDate.ToString("MMM dd, yyyy")</MudTd>
-            <MudTd DataLabel="Appointment Number">@context.AppointmentNumber</MudTd>
-            <MudTd DataLabel="Status">@context.Status</MudTd>
+            <MudTd>@((page - 1) * pageSize + appointmentLst.IndexOf(context) + 1)</MudTd>
+            <MudTd>@context.DoctorName</MudTd>
+            <MudTd>@context.PatientName</MudTd>
+            <MudTd>@context.AppointmentDate.ToString("MMM dd, yyyy")</MudTd>
+            <MudTd>@context.AppointmentNumber</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string"
+                         Variant="Variant.Outlined"
+                         Color="@GetStatusColor(context.Status)">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                           OnClick="() => OpenEditDialog(context)">
+                    Edit
+                </MudButton>
+            </MudTd>
         </RowTemplate>
     </MudTable>
-
+    
     <MudPagination Rectangular="true"
                    Variant="MudBlazor.Variant.Outlined"
                    SelectedChanged="PageChanged"
