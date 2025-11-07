@@ -1,6 +1,5 @@
-﻿using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Models.Appointment;
-using HCAS.Domain.Models.Doctors;
+﻿using HCAS.Domain.Features.Appointment;
+using HCAS.Domain.Features.Doctors;
 using HCAS.WebApp.Components.Pages.Doctor;
 using MudBlazor;
 

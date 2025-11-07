@@ -1,5 +1,4 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Models.Doctors;
 using HCAS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,6 +18,29 @@ public class PagedResult<T>
 {
     public IEnumerable<T> Items { get; set; } = new List<T>();
     public int TotalCount { get; set; }
+}
+
+public class DoctorsReqModel
+{
+    //public int? Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public int SpecializationId { get; set; }
+
+    // public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+
+    //public virtual ICollection<DoctorSchedule> DoctorSchedules { get; set; } = new List<DoctorSchedule>();
+
+    //public virtual Specialization? Specialization { get; set; }
+}
+
+public class DoctorsResModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
+    public int SpecializationId { get; set; }
+    public bool DelFlg { get; set; }
 }
 
 public class DoctorService

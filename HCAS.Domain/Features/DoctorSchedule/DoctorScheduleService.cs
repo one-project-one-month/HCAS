@@ -1,5 +1,4 @@
-﻿using HCAS.Domain.Models.DoctorSchedule;
-using HCAS.Shared;
+﻿using HCAS.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +34,18 @@ public class DoctorScheduleResModel
     public bool del_flg { get; set; }
 }
 
+public class DoctorScheduleResponseModel
+{
+    public int Id { get; set; }
+    public int? DoctorId { get; set; }
+    public string DoctorName { get; set; }
+    public string Specialization { get; set; }
+    public DateTime? ScheduleDate { get; set; }
+    public int? MaxPatients { get; set; }
+    public int AppointmentCount { get; set; }
+    public int? AvailableSlots { get; set; }
+}
+
 public class DoctorModel
 {
     public int Id { get; set; }
@@ -48,6 +59,7 @@ public class PageResult<T>
     public int TotalCount { get; set; }
 
 }
+
 public static class DoctorScheduleQuery
 {
     public const string Insert = @"

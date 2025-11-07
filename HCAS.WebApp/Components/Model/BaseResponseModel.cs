@@ -1,8 +1,7 @@
-﻿namespace HCAS.WebApp.Components.Model
+﻿namespace HCAS.WebApp.Components.Model;
+
+public class BaseResponseModel
 {
-    public class BaseResponseModel
-    {
-        public string respCode { get; set; }
-        public string respDescription { get; set; }
-    }
+    public string respCode { get; set; }
+    public string respDescription { get; set; }
 }

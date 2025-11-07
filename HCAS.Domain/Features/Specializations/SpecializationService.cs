@@ -1,6 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
-using HCAS.Domain.Features.Models.Specialization;
-using HCAS.Domain.Models;
+using HCAS.Domain.Features.Patient;
 using HCAS.Shared;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,6 +8,12 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace HCAS.Domain.Features.Specializations;
+
+public class SpecializationReqModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
+}
 
 public class PagedResult<T>
 {

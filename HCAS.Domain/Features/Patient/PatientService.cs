@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
-using HCAS.Domain.Models.Patient;
 using HCAS.Shared;
 
 namespace HCAS.Domain.Features.Patient;
@@ -30,6 +29,40 @@ public static class PatientQuery
         WHERE Id = @Id";
 
     public const string SoftDelete = "UPDATE Patients SET del_flg = 1 WHERE Id = @Id";
+}
+
+public class PatientReqModel
+{
+    public string Name { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+
+    public string Gender { get; set; }
+
+    public string Phone { get; set; }
+
+    public string Email { get; set; }
+}
+
+public class PatientResModel
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; }
+
+    public DateTime DateOfBirth { get; set; }
+
+    public string Gender { get; set; }
+
+    public string Phone { get; set; }
+
+    public string Email { get; set; }
+}
+
+public class SpecializationResModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
+    public bool DelFlg { get; set; }
 }
 
 public class PatientService

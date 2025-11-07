@@ -11,28 +11,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace HCAS.Domain
+namespace HCAS.Domain;
+
+public static class FeatureManager
 {
-    public static class FeatureManager
+    public static void AddDomain(this WebApplicationBuilder builder)
     {
-        public static void AddDomain(this WebApplicationBuilder builder)
-        {
-            // Configure DbContext with retry-on-failure
-            builder.Services.AddDbContext<AppDbContext>(opt =>
-            { 
-                opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
+        // Configure DbContext with retry-on-failure
+        builder.Services.AddDbContext<AppDbContext>(opt =>
+        { 
+            opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
 
-            }, ServiceLifetime.Transient, ServiceLifetime.Transient);
+        }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
-            // Register services
-            builder.Services.AddTransient<DapperService>();
-            builder.Services.AddTransient<DoctorService>();
-            builder.Services.AddTransient<SpecializationService>();
-            builder.Services.AddTransient<DoctorScheduleService>();
-            builder.Services.AddTransient<SpecializationService>();
-            builder.Services.AddTransient<StaffService>();
-            builder.Services.AddTransient<AppointmentService>();
-            builder.Services.AddTransient<PatientService>();
-        }
+        // Register services
+        builder.Services.AddTransient<DapperService>();
+        builder.Services.AddTransient<DoctorService>();
+        builder.Services.AddTransient<SpecializationService>();
+        builder.Services.AddTransient<DoctorScheduleService>();
+        builder.Services.AddTransient<SpecializationService>();
+        builder.Services.AddTransient<StaffService>();
+        builder.Services.AddTransient<AppointmentService>();
+        builder.Services.AddTransient<PatientService>();
     }
 }

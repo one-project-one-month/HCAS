@@ -4,13 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HCAS.Shared
+namespace HCAS.Shared;
+
+public class CustomSettingModel
 {
-    public class CustomSettingModel
+    public bool EnableEncryption
     {
-        public bool EnableEncryption
-        {
-            get; set;
-        }
+        get; set;
     }
 }

@@ -1,6 +1,5 @@
 ﻿using HCAS.Database.AppDbContextModels;
 using HCAS.Domain.Features.Doctors;
-using HCAS.Domain.Models.Appointment;
 using HCAS.Shared;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,6 +56,65 @@ public static class AppointmentQuery
 
     public const string Delete = @"
             DELETE FROM Appointments WHERE Id = @AppointmentId";
+}
+
+public class AppointmentReqModel
+{
+    //  public int Id { get; set; }
+
+    public int ScheduleId { get; set; }
+
+    public int DoctorId { get; set; }
+
+    public int PatientId { get; set; }
+
+    public DateTime AppointmentDate { get; set; }
+
+    public int AppointmentNumber { get; set; }
+
+    public string Status { get; set; } = null!;
+
+    public bool DelFlg { get; set; }
+
+    //   public virtual Doctor Doctor { get; set; } = null!;
+
+    // public virtual Patient Patient { get; set; } = null!;
+
+    //public virtual DoctorSchedule Schedule { get; set; } = null!;
+}
+
+public class AppointmentResModel
+{
+    public int Id { get; set; }
+
+    public int ScheduleId { get; set; }
+
+    public int? DoctorId { get; set; }
+
+    public int PatientId { get; set; }
+
+    public DateTime? AppointmentDate { get; set; }
+
+    public int AppointmentNumber { get; set; }
+
+    public string Status { get; set; } = null!;
+
+    public bool DelFlg { get; set; }
+
+    // public virtual Doctor Doctor { get; set; } = null!;
+}
+
+public class AppointmentResponseModel
+{
+    public int Id { get; set; }
+    public string DoctorName { get; set; }
+    public string PatientName { get; set; }
+    public DateTime AppointmentDate { get; set; }
+    public int AppointmentNumber { get; set; }
+    public string Status { get; set; }
+    public int DoctorId { get; set; }
+    public int PatientId { get; set; }
+    public int ScheduleId { get; set; }
 }
 
 public class AppointmentService

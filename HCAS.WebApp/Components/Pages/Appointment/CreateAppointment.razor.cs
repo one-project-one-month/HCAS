@@ -1,5 +1,5 @@
-﻿using HCAS.Domain.Models.DoctorSchedule;
-using HCAS.Domain.Models.Patient;
+﻿using HCAS.Domain.Features.DoctorSchedule;
+using HCAS.Domain.Features.Patient;
 using MudBlazor;
 
 namespace HCAS.WebApp.Components.Pages.Appointment;
